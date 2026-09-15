@@ -106,7 +106,7 @@
 	align-self: center;
 	flex: none;
 	gap: 0.35rem;
-	height: 1.75rem;
+	min-height: 2.25rem;
 	margin: 0;
 	min-width: 0;
 	padding: 0;
@@ -131,32 +131,25 @@
 	vertical-align: middle;
 }
 
-.dnd4e-health-display__effect > span:not(.dnd4e-health-display__duration) {
+.dnd4e-health-display__effect-copy {
 	display: inline-flex;
+	flex-direction: column;
 	align-items: center;
-	height: 100%;
+	justify-content: center;
+	min-height: 2.25rem;
 	line-height: 1;
 }
 
 .dnd4e-health-display__duration {
-	display: inline-flex;
-	align-items: center;
-	gap: 0.18rem;
-	box-sizing: border-box;
-	height: 1.4rem;
-	padding: 0.08rem 0.35rem;
-	border: 1px solid rgb(169 137 111 / 75%);
-	border-radius: 0.7rem;
-	background: rgb(8 8 9 / 82%);
-	color: #e7c88e;
-	font-size: 0.7rem;
+	display: block;
+	margin-top: 0.25rem;
+	color: #d6bd91;
+	font-size: 0.62rem;
+	font-weight: 500;
+	letter-spacing: 0.035em;
 	line-height: 1;
-	text-shadow: none;
-}
-
-.dnd4e-health-display__duration i + i {
-	font-size: 0.58rem;
-	opacity: 0.85;
+	text-align: center;
+	text-shadow: 0 0.08rem 0.12rem #000;
 }
 
 .dnd4e-health-display__combat-stats {

@@ -17,14 +17,12 @@
 			{{#each effects}}
 				<li class="dnd4e-health-display__effect" title="{{name}}">
 					<img src="{{img}}" alt="">
-					<span>{{name}}</span>
-					{{#if duration}}
-						<span class="dnd4e-health-display__duration" title="{{duration.label}}" aria-label="{{duration.label}}">
-							{{#each duration.icons}}
-								<i class="{{this}}" aria-hidden="true"></i>
-							{{/each}}
-						</span>
-					{{/if}}
+					<span class="dnd4e-health-display__effect-copy">
+						<span class="dnd4e-health-display__effect-name">{{name}}</span>
+						{{#if duration}}
+							<small class="dnd4e-health-display__duration">{{duration.label}}</small>
+						{{/if}}
+					</span>
 				</li>
 			{{/each}}
 		</ul>

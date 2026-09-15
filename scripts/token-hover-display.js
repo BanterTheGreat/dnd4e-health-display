@@ -352,56 +352,64 @@ function getEffectLabel(effect, useDescription) {
 }
 
 /**
- * Build a visual duration badge using DnD4e's prepared duration label.
+ * Build the short duration label shown beneath an effect name.
  *
  * @param {ActiveEffect} effect The displayed effect.
- * @returns {{label: string, icons: string[]}|null}
+ * @returns {{label: string}|null}
  */
 function getEffectDuration(effect) {
 	const durationType = effect.system?.durationType;
-	let icons;
+	let label;
 
 	switch (durationType) {
 		case "endOfEncounter":
-			icons = ["fa-solid fa-flag-checkered"];
+			label = "Encounter";
 			break;
 		case "saveEnd":
-			icons = ["fa-solid fa-dice-d20"];
+			label = "Save Ends";
 			break;
 		case "endOfTargetTurn":
-		case "startOfTargetTurn":
-			icons = ["fa-solid fa-crosshairs", getTurnIcon(durationType)];
+			label = `EoT ${effect.parent?.name ?? "Target"}`;
 			break;
 		case "endOfUserTurn":
+			label = `EoT ${getEffectSourceActor(effect)?.name ?? "User"}`;
+			break;
+		case "startOfTargetTurn":
 		case "startOfUserTurn":
-			icons = ["fa-solid fa-user", getTurnIcon(durationType)];
+			label = effect.duration?.label || durationType;
 			break;
 		case "custom":
-			icons = ["fa-solid fa-clock"];
+			label = effect.duration?.label || "Custom";
 			break;
 		default:
 			return null;
 	}
 
-	let label = effect.duration?.label || durationType;
-
-	if (durationType === "saveEnd" && Number.isFinite(effect.system?.saveDC)) {
-		label = `${label} · DC ${effect.system.saveDC}`;
-	}
-
-	return { label, icons };
+	return { label };
 }
 
 /**
- * Distinguish start-of-turn and end-of-turn durations visually.
+ * Resolve the actor which originated an applied ActiveEffect.
  *
- * @param {string} durationType The DnD4e duration type.
- * @returns {string}
+ * @param {ActiveEffect} effect The displayed effect.
+ * @returns {Actor|null}
  */
-function getTurnIcon(durationType) {
-	return durationType.startsWith("start")
-		? "fa-solid fa-hourglass-start"
-		: "fa-solid fa-hourglass-end";
+function getEffectSourceActor(effect) {
+	if (!effect.origin) {
+		return null;
+	}
+
+	try {
+		const origin = fromUuidSync(effect.origin);
+
+		if (origin?.documentName === "Actor") {
+			return origin;
+		}
+
+		return origin?.actor ?? null;
+	} catch (_error) {
+		return null;
+	}
 }
 
 /**
