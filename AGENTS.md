@@ -1,12 +1,19 @@
-# DND4e Health Display
+# DnD4e Info Displays
 
-Foundry VTT v14 module for the DnD4e system that provides a compact actor HUD and a party health bar. It targets the DnD4e system's [`0.9.3` source](https://github.com/EndlesNights/dnd4eBeta/tree/0.9.3); confirm system APIs against that tag before relying on current upstream behavior.
+Foundry VTT v14 module for the DnD4e system that provides compact actor and health displays. It targets the DnD4e system's [`0.9.3` source](https://github.com/EndlesNights/dnd4eBeta/tree/0.9.3); confirm system APIs against that tag before relying on current upstream behavior.
 
 ## Layout
 
-- `main.js` registers Foundry hooks
+- `main.js` initializes the health-display and actor-display modules.
+- `scripts/health-display/` owns the token-hover health display and its presentation data.
+- `scripts/actor-display/` owns the controlled-token actor display, inventory navigation, and actions.
+- `styles/` contains one stylesheet per display module.
 
 ## Architecture
+
+- Each display module exposes registration functions for settings and runtime hooks; `main.js` is the only caller.
+- The actor display uses one controlled token, with an assigned or owned player-character fallback for non-GM users.
+- The manifest retains the `dnd4e-health-display` package ID so existing installations and client settings continue working under the new title.
 
 ## Working conventions
 

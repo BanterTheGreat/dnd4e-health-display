@@ -1,0 +1,111 @@
+<div class="dnd4e-info-actor-display__panel">
+	<header class="dnd4e-info-actor-display__identity">
+		<img src="{{portrait}}" alt="" draggable="false">
+		<div>
+			<h1>{{name}}</h1>
+			<strong>{{levelAndClass}}</strong>
+			{{#if subtitle}}<small>{{subtitle}}</small>{{/if}}
+		</div>
+	</header>
+
+	<section class="dnd4e-info-actor-display__vitals">
+		<label class="dnd4e-info-actor-display__hp-value">
+			<span>Hit Points</span>
+			<input type="number" value="{{hp.value}}" data-resource-path="system.attributes.hp.value">
+			<small>of {{hp.maximum}}</small>
+		</label>
+		<div class="dnd4e-info-actor-display__hp-segments" role="img" aria-label="Hit points: {{hp.value}} of {{hp.maximum}}">
+			{{#each hp.segments}}<i class="{{#if filled}}is-filled{{/if}}"></i>{{/each}}
+		</div>
+		<label class="dnd4e-info-actor-display__temp-hp">
+			<span>Temp HP</span>
+			<input type="number" value="{{tempHp}}" data-resource-path="system.attributes.temphp.value">
+		</label>
+		<label class="dnd4e-info-actor-display__surge-value">
+			<span>Healing Surges</span>
+			<input type="number" value="{{surges.value}}" data-resource-path="system.details.surges.value">
+			<small>of {{surges.maximum}}</small>
+		</label>
+		<div class="dnd4e-info-actor-display__surge-segments" style="--surge-count: {{surges.maximum}}" role="img" aria-label="Healing surges: {{surges.value}} of {{surges.maximum}}">
+			{{#each surges.segments}}<i class="{{#if filled}}is-filled{{/if}}"></i>{{/each}}
+		</div>
+	</section>
+
+	<section class="dnd4e-info-actor-display__stats" aria-label="Defenses and initiative">
+		{{#each stats}}
+			<button type="button" title="{{label}}" {{#if action}}data-action="{{action}}" data-command="{{command}}"{{/if}}>
+				<i class="{{icon}}" aria-hidden="true"></i>
+				<strong>{{value}}</strong>
+				<small>{{shortLabel}}</small>
+			</button>
+		{{/each}}
+	</section>
+
+	<nav class="dnd4e-info-actor-display__tabs" aria-label="Actor information">
+		{{#each tabs}}
+			<button type="button" class="{{#if active}}is-active{{/if}}" data-action="showSection" data-display-tab="{{key}}">
+				<i class="{{icon}}" aria-hidden="true"></i>
+				<span>{{label}}</span>
+			</button>
+		{{/each}}
+	</nav>
+
+	<div class="dnd4e-info-actor-display__workspace">
+		{{#if isPowers}}
+			{{#each powerCategories}}
+				<section class="dnd4e-info-actor-display__group">
+					<h2>{{name}} <small>{{powers.length}}</small></h2>
+					{{#each powers}}
+						<div class="dnd4e-info-actor-display__power {{usageClass}}{{#if depleted}} is-depleted{{/if}}" data-action="power" data-item-id="{{id}}" role="button" tabindex="0">
+							<i class="{{icon}}" aria-hidden="true"></i>
+							<strong>{{name}}</strong>
+							{{#if showUses}}<small>{{uses}}</small>{{/if}}
+							{{#if depleted}}<button type="button" data-action="refreshPower" data-item-id="{{id}}" title="Refresh power"><i class="fa-solid fa-rotate-right"></i></button>{{/if}}
+						</div>
+					{{/each}}
+				</section>
+			{{/each}}
+		{{/if}}
+
+		{{#if isSkills}}
+			<div class="dnd4e-info-actor-display__skills">
+				{{#each skills}}
+					<button type="button" data-action="skill" data-skill="{{key}}"><span>{{label}}</span><strong>{{modifier}}</strong><small>Roll</small></button>
+				{{/each}}
+			</div>
+		{{/if}}
+
+		{{#if isFeatures}}
+			{{#each featureCategories}}
+				<section class="dnd4e-info-actor-display__group">
+					<h2>{{name}}</h2>
+					{{#each features}}<button type="button" class="dnd4e-info-actor-display__feature" data-action="feature" data-item-id="{{id}}"><i class="fa-solid fa-book"></i><strong>{{name}}</strong></button>{{/each}}
+				</section>
+			{{/each}}
+		{{/if}}
+
+		{{#if isItems}}
+			{{#each itemCategories}}
+				<section class="dnd4e-info-actor-display__group">
+					<h2>{{name}}</h2>
+					{{#each items}}
+						<div class="dnd4e-info-actor-display__item">
+							<button type="button" data-action="item" data-item-id="{{id}}"><i class="fa-solid fa-treasure-chest"></i><strong>{{name}}</strong></button>
+							{{#if canEquip}}<button type="button" class="dnd4e-info-actor-display__equip {{#if equipped}}is-equipped{{/if}}" data-action="toggleEquip" data-item-id="{{id}}">{{#if equipped}}Equipped{{else}}Equip{{/if}}</button>{{/if}}
+						</div>
+					{{/each}}
+				</section>
+			{{/each}}
+		{{/if}}
+	</div>
+
+	<section class="dnd4e-info-actor-display__quick-actions" aria-label="Quick actions">
+		{{#each quickActions}}
+			<button type="button" data-action="quick" data-command="{{key}}" title="{{label}}">
+				<i class="{{icon}}" aria-hidden="true"></i>
+				<strong>{{label}}</strong>
+				{{#if detail}}<small>{{detail}}</small>{{/if}}
+			</button>
+		{{/each}}
+	</section>
+</div>

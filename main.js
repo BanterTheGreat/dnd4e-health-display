@@ -1,14 +1,20 @@
 export const MODULE_ID = "dnd4e-health-display";
 
 import {
-	registerTokenHoverDisplay,
-	registerTokenHoverDisplaySettings,
-} from "./scripts/token-hover-display.js";
+	registerActorDisplay,
+	registerActorDisplaySettings,
+} from "./scripts/actor-display/actor-display.js";
+import {
+	registerHealthDisplay,
+	registerHealthDisplaySettings,
+} from "./scripts/health-display/health-display.js";
 
 Hooks.once("init", () => {
-	registerTokenHoverDisplaySettings();
+	registerHealthDisplaySettings();
+	registerActorDisplaySettings();
 });
 
 Hooks.once("ready", () => {
-	registerTokenHoverDisplay();
+	registerHealthDisplay();
+	registerActorDisplay();
 });

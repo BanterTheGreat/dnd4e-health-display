@@ -1,9 +1,9 @@
 import { getTokenHoverDisplayData } from "./token-hover-display-data.js";
 
 const DISPLAY_ID = "dnd4e-token-hover-display";
-const DISPLAY_TEMPLATE = "modules/dnd4e-health-display/scripts/token-hover-display.hbs";
+const DISPLAY_TEMPLATE = "modules/dnd4e-health-display/scripts/health-display/health-display.hbs";
 const STYLESHEET_ID = "dnd4e-health-display-styles";
-const STYLESHEET_PATH = "modules/dnd4e-health-display/styles/token-hover-display.css";
+const STYLESHEET_PATH = "modules/dnd4e-health-display/styles/health-display.css";
 const EFFECT_DESCRIPTIONS_SETTING = "shiftEffectDescriptions";
 const SHOW_TRAITS_SETTING = "showNpcTraits";
 
@@ -12,7 +12,7 @@ let renderSequence = 0;
 let shiftHeld = false;
 
 /** Register settings used by the token hover display. */
-export function registerTokenHoverDisplaySettings() {
+export function registerHealthDisplaySettings() {
 	game.settings.register("dnd4e-health-display", EFFECT_DESCRIPTIONS_SETTING, {
 		name: "Show effect descriptions by default",
 		hint: "When enabled, temporary-effect descriptions are shown by default and holding Shift reveals their names. Disable this to reverse that behavior.",
@@ -35,7 +35,7 @@ export function registerTokenHoverDisplaySettings() {
 }
 
 /** Register the token hover display and the hooks which keep it current. */
-export function registerTokenHoverDisplay() {
+export function registerHealthDisplay() {
 	ensureStylesheet();
 	ensureDisplay();
 
