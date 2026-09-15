@@ -124,7 +124,7 @@ function getTurnDistance(token) {
  * Expose NPC trait features only to the GM.
  *
  * @param {Actor} actor The displayed actor.
- * @returns {Array<{name: string, description: string}>}
+ * @returns {Array<{description: string}>}
  */
 function getNpcTraits(actor) {
 	if (actor.type !== "NPC" || !game.user?.isGM) {
@@ -133,10 +133,8 @@ function getNpcTraits(actor) {
 
 	return Array.from(actor.items ?? [])
 		.filter((item) => item.type === "feature" && ["trait", "race"].includes(item.system?.featureType))
-		.map((item) => ({
-			name: item.name,
-			description: getPlainText(item.system?.description?.value),
-		}));
+		.map((item) => ({ description: getPlainText(item.system?.description?.value) }))
+		.filter((item) => item.description);
 }
 
 /**

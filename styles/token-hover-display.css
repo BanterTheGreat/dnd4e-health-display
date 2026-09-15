@@ -170,10 +170,13 @@
 
 .dnd4e-health-display__health-state {
 	position: absolute;
-	inset: 0;
+	top: 50%;
+	left: 0;
+	right: 0;
 	display: flex;
 	align-items: center;
 	justify-content: center;
+	transform: translateY(-50%);
 	color: #fff4e8;
 	font-size: 0.68rem;
 	font-weight: 800;
@@ -187,12 +190,17 @@
 	display: inline-flex;
 	align-items: center;
 	gap: 0.3rem;
-	margin: 0.25rem 0;
+	flex: 0 0 auto;
+	margin: 0;
 	color: #e7c88e;
 	font-size: 0.72rem;
 	font-weight: 700;
 	letter-spacing: 0.035em;
 	text-shadow: 0 0.08rem 0.15rem #000;
+}
+
+.dnd4e-health-display__turn-distance > i {
+	font-size: 0.95rem;
 }
 
 .dnd4e-health-display__segment {
@@ -340,15 +348,6 @@
 	text-shadow: 0 0.08rem 0.15rem #000;
 }
 
-.dnd4e-health-display__traits h3 {
-	margin: 0 0 0.35rem;
-	color: #e7c88e;
-	font-size: 0.78rem;
-	letter-spacing: 0.08em;
-	text-align: center;
-	text-transform: uppercase;
-}
-
 .dnd4e-health-display__traits ul {
 	display: flex;
 	flex-direction: column;
@@ -359,21 +358,10 @@
 }
 
 .dnd4e-health-display__traits li {
-	display: flex;
-	align-items: baseline;
-	gap: 0.45rem;
 	margin: 0;
+	color: #d4c7b8;
 	font-size: 0.75rem;
 	line-height: 1.25;
-}
-
-.dnd4e-health-display__traits strong {
-	flex: 0 0 auto;
-	color: #f5eee5;
-}
-
-.dnd4e-health-display__traits span {
-	color: #d4c7b8;
 }
 
 @media (max-width: 700px) {
