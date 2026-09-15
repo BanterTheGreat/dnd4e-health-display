@@ -88,6 +88,7 @@
 
 .dnd4e-health-display__effects {
 	display: flex;
+	align-items: center;
 	flex-wrap: wrap;
 	justify-content: center;
 	column-gap: 0.8rem;
@@ -99,23 +100,120 @@
 	list-style: none;
 }
 
-.dnd4e-health-display__effect {
+.dnd4e-health-display__effects > .dnd4e-health-display__effect {
 	display: flex;
 	align-items: center;
+	align-self: center;
+	flex: none;
 	gap: 0.35rem;
+	height: 1.75rem;
+	margin: 0;
 	min-width: 0;
+	padding: 0;
+	position: static;
 	font-size: 0.9rem;
+	line-height: 1;
 	text-shadow: 0 0.1rem 0.15rem #000, 0 0 0.25rem #000;
+	transform: none;
+	vertical-align: middle;
 	white-space: nowrap;
 }
 
 .dnd4e-health-display__effect img {
+	box-sizing: border-box;
+	flex: 0 0 1.75rem;
 	width: 1.75rem;
 	height: 1.75rem;
 	border: 1px solid #a9896f;
 	border-radius: 50%;
 	background: #15110f;
 	object-fit: cover;
+	vertical-align: middle;
+}
+
+.dnd4e-health-display__effect > span:not(.dnd4e-health-display__duration) {
+	display: inline-flex;
+	align-items: center;
+	height: 100%;
+	line-height: 1;
+}
+
+.dnd4e-health-display__duration {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.18rem;
+	box-sizing: border-box;
+	height: 1.4rem;
+	padding: 0.08rem 0.35rem;
+	border: 1px solid rgb(169 137 111 / 75%);
+	border-radius: 0.7rem;
+	background: rgb(8 8 9 / 82%);
+	color: #e7c88e;
+	font-size: 0.7rem;
+	line-height: 1;
+	text-shadow: none;
+}
+
+.dnd4e-health-display__duration i + i {
+	font-size: 0.58rem;
+	opacity: 0.85;
+}
+
+.dnd4e-health-display__combat-stats {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.45rem;
+	margin: 0.45rem 0 0;
+	padding: 0;
+	list-style: none;
+}
+
+.dnd4e-health-display__combat-stats > .dnd4e-health-display__combat-stat {
+	display: inline-flex;
+	align-items: center;
+	align-self: center;
+	justify-content: center;
+	flex: none;
+	gap: 0.25rem;
+	box-sizing: border-box;
+	height: 1.75rem;
+	margin: 0;
+	min-width: 2.5rem;
+	padding: 0.12rem 0.4rem;
+	position: static;
+	border: 1px solid rgb(169 137 111 / 65%);
+	border-radius: 0.3rem;
+	background: rgb(8 8 9 / 82%);
+	color: #ddd;
+	font-size: 0.86rem;
+	font-weight: 700;
+	line-height: 1;
+	text-shadow: 0 0.08rem 0.15rem #000;
+	transform: none;
+	vertical-align: middle;
+}
+
+.dnd4e-health-display__combat-stat i {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 1em;
+	height: 1em;
+	color: #e7c88e;
+	font-size: 0.8rem;
+}
+
+.dnd4e-health-display__combat-stat.is-positive span {
+	color: #8ee79a;
+}
+
+.dnd4e-health-display__combat-stat.is-negative span {
+	color: #ff8181;
+}
+
+.dnd4e-health-display__combat-stat.is-neutral span {
+	color: #aaa;
 }
 
 @media (max-width: 700px) {
@@ -126,5 +224,9 @@
 
 	.dnd4e-health-display__name {
 		font-size: 1.2rem;
+	}
+
+	.dnd4e-health-display__combat-stats {
+		flex-wrap: wrap;
 	}
 }

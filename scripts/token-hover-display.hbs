@@ -18,6 +18,24 @@
 				<li class="dnd4e-health-display__effect" title="{{name}}">
 					<img src="{{img}}" alt="">
 					<span>{{name}}</span>
+					{{#if duration}}
+						<span class="dnd4e-health-display__duration" title="{{duration.label}}" aria-label="{{duration.label}}">
+							{{#each duration.icons}}
+								<i class="{{this}}" aria-hidden="true"></i>
+							{{/each}}
+						</span>
+					{{/if}}
+				</li>
+			{{/each}}
+		</ul>
+	{{/if}}
+
+	{{#if combatStats.length}}
+		<ul class="dnd4e-health-display__combat-stats" aria-label="Current combat modifiers and defenses">
+			{{#each combatStats}}
+				<li class="dnd4e-health-display__combat-stat {{tone}}" title="{{label}}: {{value}}" aria-label="{{label}}: {{value}}">
+					<i class="{{icon}}" aria-hidden="true"></i>
+					<span>{{value}}</span>
 				</li>
 			{{/each}}
 		</ul>
