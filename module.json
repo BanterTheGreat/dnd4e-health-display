@@ -1,0 +1,17 @@
+{
+	"id": "dnd4e-health-display",
+	"title": "4e Health Display",
+	"description": "Adds a compact display for 4e health",
+	"version": "1.0.1",
+    "authors": [
+        {
+            "name": "Banter"
+        }
+    ],
+	"esmodules": ["main.js"],
+	"styles": ["styles/token-hover-display.css"],
+	"compatibility": {
+		"minimum": "14",
+		"verified": "14"
+	}
+}

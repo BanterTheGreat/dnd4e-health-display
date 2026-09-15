@@ -1,0 +1,25 @@
+<div class="dnd4e-health-display__panel">
+	<header class="dnd4e-health-display__heading">
+		<span class="dnd4e-health-display__name">{{name}}</span>
+		{{#if role}}
+			<span class="dnd4e-health-display__role">{{role}}</span>
+		{{/if}}
+	</header>
+
+	<div class="dnd4e-health-display__bar" role="img" aria-label="Health shown in quarters">
+		{{#each segments}}
+			<span class="dnd4e-health-display__segment{{#if filled}} is-filled{{/if}}"></span>
+		{{/each}}
+	</div>
+
+	{{#if effects.length}}
+		<ul class="dnd4e-health-display__effects" aria-label="Temporary effects and conditions">
+			{{#each effects}}
+				<li class="dnd4e-health-display__effect" title="{{name}}">
+					<img src="{{img}}" alt="">
+					<span>{{name}}</span>
+				</li>
+			{{/each}}
+		</ul>
+	{{/if}}
+</div>
