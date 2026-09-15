@@ -29,6 +29,7 @@ const FEATURE_CATEGORY_RULES = [
  */
 export async function getActorDisplayData(token, activeTab) {
 	const actor = token.actor;
+	const isNpc = actor.type === "NPC";
 	const hp = actor.system?.attributes?.hp ?? {};
 	const surges = actor.system?.details?.surges ?? {};
 	const hpValue = Number(hp.value) || 0;
@@ -58,10 +59,10 @@ export async function getActorDisplayData(token, activeTab) {
 		stats: getStats(actor),
 		tabs: getTabs(actor, activeTab),
 		activeTab,
-		isPowers: activeTab === "powers",
+		isPowers: activeTab === "powers" || (isNpc && activeTab === "features"),
 		isSkills: activeTab === "skills",
-		isFeatures: activeTab === "features",
-		isTraits: activeTab === "traits",
+		isFeatures: !isNpc && activeTab === "features",
+		isNpcFeatures: isNpc && activeTab === "features",
 		isItems: activeTab === "items",
 		powerCategories: await getPowerCategories(actor),
 		skills: getSkills(actor),
@@ -161,14 +162,16 @@ function getStats(actor) {
  */
 function getTabs(actor, activeTab) {
 	return [
-		{ key: "powers", label: "Powers", icon: "fa-solid fa-sword", active: activeTab === "powers" },
+		...(actor.type === "Player Character" ? [
+			{ key: "powers", label: "Powers", icon: "fa-solid fa-sword", active: activeTab === "powers" },
+		] : [
+			{ key: "features", label: "Features", icon: "fa-solid fa-book", active: activeTab === "features" },
+		]),
 		{ key: "skills", label: "Skills", icon: "fa-solid fa-dice-d20", active: activeTab === "skills" },
 		...(actor.type === "Player Character" ? [
 			{ key: "features", label: "Feats", icon: "fa-solid fa-book", active: activeTab === "features" },
 			{ key: "items", label: "Items", icon: "fa-solid fa-treasure-chest", active: activeTab === "items" },
-		] : [
-			{ key: "traits", label: "Traits", icon: "fa-solid fa-book", active: activeTab === "traits" },
-		]),
+		] : []),
 	];
 }
 
@@ -281,8 +284,20 @@ function getFeatureCategories(actor) {
 		features: Array.from(actor.items ?? [])
 			.filter((item) => item.type === "feature" && item.system?.featureType === type)
 			.sort((left, right) => left.name.localeCompare(right.name))
-			.map((item) => ({ id: item.id, name: item.name })),
+			.map((item) => ({ id: item.id, name: item.name, description: getFeatureDescription(item) })),
 	})).filter((category) => category.features.length);
+}
+
+/** @param {Item} feature The NPC trait or racial feat to describe. */
+function getFeatureDescription(feature) {
+	const html = feature.system?.description?.chat || feature.system?.description?.value || "";
+	if (!html) {
+		return "";
+	}
+
+	const element = document.createElement("div");
+	element.innerHTML = html;
+	return element.textContent?.trim() ?? "";
 }
 
 /**
@@ -302,7 +317,7 @@ function getTraitCategories(actor) {
 		features: Array.from(actor.items ?? [])
 			.filter((item) => item.type === "feature" && item.system?.featureType === type)
 			.sort((left, right) => left.name.localeCompare(right.name))
-			.map((item) => ({ id: item.id, name: item.name })),
+			.map((item) => ({ id: item.id, name: item.name, description: getFeatureDescription(item) })),
 	})).filter((category) => category.features.length);
 }
 

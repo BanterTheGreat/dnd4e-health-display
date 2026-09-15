@@ -889,6 +889,42 @@
 	text-align: left;
 }
 
+.dnd4e-info-actor-display__feature--trait {
+	display: grid;
+	grid-template-columns: 1.4rem minmax(0, 1fr);
+	align-items: start;
+	height: auto;
+	min-height: 0;
+}
+
+.dnd4e-info-actor-display__feature--trait > i {
+	margin-top: 0.1rem;
+}
+
+.dnd4e-info-actor-display__feature-copy {
+	display: block;
+	min-width: 0;
+}
+
+.dnd4e-info-actor-display__feature-copy strong,
+.dnd4e-info-actor-display__feature-copy small {
+	display: block;
+}
+
+.dnd4e-info-actor-display__feature-copy strong {
+	margin-bottom: 0.2rem;
+}
+
+.dnd4e-info-actor-display__feature-copy small {
+	color: #b9ab9e;
+	font-family: var(--font-serif, serif);
+	font-size: 0.7rem;
+	font-weight: 400;
+	line-height: 1.25;
+	text-align: left;
+	white-space: normal;
+}
+
 .dnd4e-info-actor-display__item {
 	display: grid;
 	grid-template-columns: 1fr auto;

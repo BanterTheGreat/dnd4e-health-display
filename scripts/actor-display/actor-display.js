@@ -161,7 +161,7 @@ class ActorDisplay extends HandlebarsApplicationMixin(ApplicationV2) {
 	constructor(options, token) {
 		super(options);
 		this.token = token;
-		this.activeTab = "powers";
+		this.activeTab = getDefaultTab(token);
 		this.savedScrollTop = 0;
 	}
 
@@ -203,7 +203,7 @@ class ActorDisplay extends HandlebarsApplicationMixin(ApplicationV2) {
 		const actorChanged = this.actor?.id !== token.actor?.id;
 		this.token = token;
 		if (actorChanged) {
-			this.activeTab = "powers";
+			this.activeTab = getDefaultTab(token);
 			this.savedScrollTop = 0;
 		}
 		this.render();
@@ -384,4 +384,9 @@ class ActorDisplay extends HandlebarsApplicationMixin(ApplicationV2) {
 			default: return undefined;
 		}
 	}
+}
+
+/** @param {Token} token The token whose actor determines the initial tab. */
+function getDefaultTab(token) {
+	return token.actor?.type === "NPC" ? "features" : "powers";
 }

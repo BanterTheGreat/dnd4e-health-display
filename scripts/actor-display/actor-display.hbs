@@ -6,7 +6,7 @@
 			<strong>{{levelAndClass}}</strong>
 			{{#if subtitle}}<small>{{subtitle}}</small>{{/if}}
 		</div>
-		<button type="button" class="dnd4e-info-actor-display__close" data-action="dismiss" aria-label="Close actor display" title="Close">×</button>
+		<button type="button" class="dnd4e-info-actor-display__close" data-action="dismiss" aria-label="Close actor display" title="Close">&times;</button>
 	</header>
 
 	<section class="dnd4e-info-actor-display__vitals">
@@ -54,6 +54,20 @@
 	</nav>
 
 	<div class="dnd4e-info-actor-display__workspace">
+		{{#if isNpcFeatures}}
+			{{#each traitCategories}}
+				<section class="dnd4e-info-actor-display__group">
+					<h2>{{name}}</h2>
+					{{#each features}}
+						<button type="button" class="dnd4e-info-actor-display__feature dnd4e-info-actor-display__feature--trait" data-action="feature" data-item-id="{{id}}" data-item-tooltip data-tooltip-direction="RIGHT">
+							<i class="fa-solid fa-book" aria-hidden="true"></i>
+							<span class="dnd4e-info-actor-display__feature-copy"><strong>{{name}}</strong>{{#if description}}<small>{{description}}</small>{{/if}}</span>
+						</button>
+					{{/each}}
+				</section>
+			{{/each}}
+		{{/if}}
+
 		{{#if isPowers}}
 			{{#each powerCategories}}
 				<section class="dnd4e-info-actor-display__group">
@@ -84,15 +98,6 @@
 
 		{{#if isFeatures}}
 			{{#each featureCategories}}
-				<section class="dnd4e-info-actor-display__group">
-					<h2>{{name}}</h2>
-					{{#each features}}<button type="button" class="dnd4e-info-actor-display__feature" data-action="feature" data-item-id="{{id}}" data-item-tooltip data-tooltip-direction="RIGHT"><i class="fa-solid fa-book"></i><strong>{{name}}</strong></button>{{/each}}
-				</section>
-			{{/each}}
-		{{/if}}
-
-		{{#if isTraits}}
-			{{#each traitCategories}}
 				<section class="dnd4e-info-actor-display__group">
 					<h2>{{name}}</h2>
 					{{#each features}}<button type="button" class="dnd4e-info-actor-display__feature" data-action="feature" data-item-id="{{id}}" data-item-tooltip data-tooltip-direction="RIGHT"><i class="fa-solid fa-book"></i><strong>{{name}}</strong></button>{{/each}}
