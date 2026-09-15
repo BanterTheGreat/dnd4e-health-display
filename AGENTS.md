@@ -1,4 +1,4 @@
-# Too Much Too Track
+# DND4e Health Display
 
 Foundry VTT v14 module for the DnD4e system that provides a compact actor HUD and a party health bar. It targets the DnD4e system's [`0.9.3` source](https://github.com/EndlesNights/dnd4eBeta/tree/0.9.3); confirm system APIs against that tag before relying on current upstream behavior.
 
