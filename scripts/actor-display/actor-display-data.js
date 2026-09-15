@@ -246,8 +246,44 @@ function getItemCategories(actor) {
 		items: Array.from(actor.items ?? [])
 			.filter(predicate)
 			.sort((left, right) => left.name.localeCompare(right.name))
-			.map((item) => ({ id: item.id, name: item.name, canEquip, equipped: Boolean(item.system?.equipped) })),
+			.map((item) => ({
+				id: item.id,
+				name: item.name,
+				canEquip,
+				equipped: Boolean(item.system?.equipped),
+				weaponSummary: item.type === "weapon" ? getWeaponSummary(item) : "",
+			})),
 	})).filter((category) => category.items.length);
+}
+
+/**
+ * Format a weapon's base damage dice and enabled properties.
+ *
+ * @param {Item} weapon The weapon item to summarize.
+ * @returns {string}
+ */
+function getWeaponSummary(weapon) {
+	const damage = Array.from(weapon.system?.damageDice?.parts ?? [])
+		.map((part) => {
+			const dice = `${part.numDice || 1}d${part.numFaces || "?"}`;
+			const modifier = String(part.modifier ?? "").trim();
+			if (!modifier) {
+				return dice;
+			}
+
+			return `${dice}${modifier.startsWith("+") || modifier.startsWith("-") ? "" : "+"}${modifier}`;
+		})
+		.filter(Boolean)
+		.join(" + ");
+	const properties = Object.entries(weapon.system?.properties ?? {})
+		.filter(([_key, enabled]) => enabled)
+		.map(([key]) => {
+			const label = CONFIG.DND4E.weaponProperties?.[key] ?? key;
+			const localized = game.i18n.localize(label);
+			return key === "bru" ? `${localized} ${weapon.system?.brutalNum ?? ""}`.trim() : localized;
+		});
+
+	return [damage, ...properties].filter(Boolean).join(" · ");
 }
 
 /** @param {Actor} actor The displayed actor. */

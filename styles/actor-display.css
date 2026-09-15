@@ -3,6 +3,7 @@
 	right: auto;
 	bottom: auto;
 	z-index: 90;
+	height: min(48rem, calc(100vh - 5rem));
 	max-height: min(48rem, calc(100vh - 5rem));
 	margin: 0;
 	color: #f5eee5;
@@ -16,6 +17,7 @@
 	overflow: hidden;
 	box-sizing: border-box;
 	width: 23rem;
+	height: min(48rem, calc(100vh - 5rem));
 	max-height: min(48rem, calc(100vh - 5rem));
 	border: 1px solid #997456;
 	border-radius: 0.65rem;
@@ -278,16 +280,19 @@
 
 .dnd4e-info-actor-display__tabs {
 	display: grid;
-	grid-template-columns: repeat(4, minmax(0, 1fr));
+	grid-template-columns: repeat(auto-fit, minmax(4rem, 1fr));
+	gap: 0.35rem;
 	flex: 0 0 auto;
+	padding: 0.4rem 0.55rem;
+	border-bottom: 1px solid rgb(153 116 86 / 28%);
+	background: #181719;
 }
 
 .dnd4e-info-actor-display__tabs button {
 	min-width: 0;
 	padding: 0.46rem 0.12rem;
-	border: 0;
-	border-right: 1px solid rgb(153 116 86 / 22%);
-	border-bottom: 1px solid rgb(153 116 86 / 32%);
+	border: 1px solid rgb(153 116 86 / 32%);
+	border-radius: 0.3rem;
 	background: #262527;
 	color: #9e9080;
 	font-size: 0.58rem;
@@ -303,10 +308,10 @@
 }
 
 .dnd4e-info-actor-display__tabs button.is-active {
-	border-bottom-color: #c89550;
+	border-color: #c89550;
 	background: linear-gradient(#46372d, #302821);
 	color: #f0d6b3;
-	box-shadow: inset 0 -2px #c89550;
+	box-shadow: inset 0 0 0 1px rgb(200 149 80 / 20%);
 }
 
 .dnd4e-info-actor-display__workspace {
@@ -399,6 +404,7 @@
 .dnd4e-info-actor-display__skills {
 	display: grid;
 	grid-template-columns: repeat(2, 1fr);
+	grid-auto-rows: minmax(2.5rem, auto);
 	gap: 0.32rem;
 	padding-top: 0.7rem;
 }
@@ -408,11 +414,15 @@
 	grid-template-columns: 1fr auto;
 	align-items: center;
 	gap: 0.08rem 0.5rem;
+	height: auto;
+	min-height: 2.5rem;
+	overflow: hidden;
 	padding: 0.48rem 0.58rem;
 	border: 1px solid rgb(153 116 86 / 30%);
 	border-radius: 0.25rem;
 	background: linear-gradient(90deg, #302a26, #201f20);
 	color: #e5cfb2;
+	line-height: 1;
 	text-align: left;
 }
 
@@ -430,6 +440,7 @@
 }
 
 .dnd4e-info-actor-display__feature {
+	margin-bottom: 0.48rem;
 	border-left: 3px solid #9d784e;
 	background: linear-gradient(90deg, #31271f, #1c1b1c);
 	text-align: left;
@@ -454,12 +465,30 @@
 	border: 0;
 	background: transparent;
 	color: #ead6ba;
-	text-align: left;
+	text-align: right;
 }
 
-.dnd4e-info-actor-display__item strong {
+.dnd4e-info-actor-display__item-copy {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	min-width: 0;
+	gap: 0.16rem;
+	text-align: right;
+}
+
+.dnd4e-info-actor-display__item-copy strong {
 	overflow: hidden;
 	font-size: 0.75rem;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.dnd4e-info-actor-display__item-copy small {
+	overflow: hidden;
+	color: #95877a;
+	font-size: 0.54rem;
+	line-height: 1.2;
 	text-overflow: ellipsis;
 	white-space: nowrap;
 }
@@ -499,6 +528,7 @@
 	min-height: 3rem;
 	padding: 0.35rem 0.2rem;
 	border: 0;
+	border-radius: 0;
 	border-right: 1px solid rgb(153 116 86 / 20%);
 	border-bottom: 1px solid rgb(153 116 86 / 20%);
 	background: #29282a;

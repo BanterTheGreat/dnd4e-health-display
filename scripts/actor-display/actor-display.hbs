@@ -90,7 +90,13 @@
 					<h2>{{name}}</h2>
 					{{#each items}}
 						<div class="dnd4e-info-actor-display__item">
-							<button type="button" data-action="item" data-item-id="{{id}}"><i class="fa-solid fa-treasure-chest"></i><strong>{{name}}</strong></button>
+							<button type="button" data-action="item" data-item-id="{{id}}">
+								<i class="fa-solid fa-treasure-chest"></i>
+								<span class="dnd4e-info-actor-display__item-copy">
+									<strong>{{name}}</strong>
+									{{#if weaponSummary}}<small title="{{weaponSummary}}">{{weaponSummary}}</small>{{/if}}
+								</span>
+							</button>
 							{{#if canEquip}}<button type="button" class="dnd4e-info-actor-display__equip {{#if equipped}}is-equipped{{/if}}" data-action="toggleEquip" data-item-id="{{id}}">{{#if equipped}}Equipped{{else}}Equip{{/if}}</button>{{/if}}
 						</div>
 					{{/each}}
