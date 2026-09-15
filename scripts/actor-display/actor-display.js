@@ -9,6 +9,7 @@ const TEMPLATE_PATH = `modules/${MODULE_ID}/scripts/actor-display/actor-display.
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
 let selectionRenderTimer = null;
+let isActorDisplayDismissed = false;
 
 /** Register client settings owned by the actor display. */
 export function registerActorDisplaySettings() {
@@ -40,7 +41,10 @@ export function registerActorDisplaySettings() {
 
 /** Register hooks which create and refresh the actor display. */
 export function registerActorDisplay() {
-	Hooks.on("canvasReady", renderSelectedActor);
+	Hooks.on("canvasReady", () => {
+		isActorDisplayDismissed = false;
+		renderSelectedActor();
+	});
 	Hooks.on("controlToken", scheduleSelectedActorRender);
 	Hooks.on("createToken", scheduleSelectedActorRender);
 	Hooks.on("deleteToken", scheduleSelectedActorRender);
@@ -57,7 +61,11 @@ export function registerActorDisplay() {
 }
 
 /** Render after Foundry has finished changing the controlled-token collection. */
-function scheduleSelectedActorRender() {
+function scheduleSelectedActorRender(token, controlled) {
+	if (controlled) {
+		isActorDisplayDismissed = false;
+	}
+
 	window.clearTimeout(selectionRenderTimer);
 	selectionRenderTimer = window.setTimeout(renderSelectedActor, 0);
 }
@@ -65,6 +73,10 @@ function scheduleSelectedActorRender() {
 /** Select the best token for the current user and display it. */
 function renderSelectedActor() {
 	if (!game.settings.get(MODULE_ID, SHOW_SETTING) || !canvas?.ready) {
+		return;
+	}
+
+	if (isActorDisplayDismissed) {
 		return;
 	}
 
@@ -110,8 +122,13 @@ function getTokenToDisplay() {
 
 /** @param {Actor} actor The updated actor. */
 function refreshForActor(actor) {
-	if (ui.Dnd4eActorDisplay?.actor?.id === actor.id) {
-		ui.Dnd4eActorDisplay.render();
+	const display = ui.Dnd4eActorDisplay;
+	if (!display) {
+		return;
+	}
+
+	if (display.actor?.id === actor.id) {
+		display.render();
 	}
 }
 
@@ -132,6 +149,12 @@ function closeActorDisplay() {
 	const display = ui.Dnd4eActorDisplay;
 	ui.Dnd4eActorDisplay = null;
 	void display?.close();
+}
+
+/** Dismiss the actor display until the user controls a token again. */
+function dismissActorDisplay() {
+	isActorDisplayDismissed = true;
+	closeActorDisplay();
 }
 
 class ActorDisplay extends HandlebarsApplicationMixin(ApplicationV2) {
@@ -155,6 +178,7 @@ class ActorDisplay extends HandlebarsApplicationMixin(ApplicationV2) {
 		dragResizable: false,
 		window: { frame: false },
 		actions: {
+			dismiss: ActorDisplay.prototype.onDismiss,
 			showSection: ActorDisplay.prototype.onShowSection,
 			power: { handler: ActorDisplay.prototype.onPower, buttons: [0, 2] },
 			refreshPower: ActorDisplay.prototype.onRefreshPower,
@@ -188,7 +212,7 @@ class ActorDisplay extends HandlebarsApplicationMixin(ApplicationV2) {
 	/** @returns {object} */
 	async _prepareContext(options) {
 		const context = await super._prepareContext(options);
-		return foundry.utils.mergeObject(context, getActorDisplayData(this.token, this.activeTab));
+		return foundry.utils.mergeObject(context, await getActorDisplayData(this.token, this.activeTab));
 	}
 
 	/** Place the frameless display directly in the document body. */
@@ -215,19 +239,26 @@ class ActorDisplay extends HandlebarsApplicationMixin(ApplicationV2) {
 	/** Bind editable resource inputs. */
 	initializeResourceInputs() {
 		for (const input of this.element.querySelectorAll("[data-resource-path]")) {
+			let submittedValue = input.value;
+			const submit = async () => {
+				const value = Number(input.value);
+				if (!Number.isFinite(value) || input.value === submittedValue) {
+					return;
+				}
+
+				submittedValue = input.value;
+				await this.actor.update({ [input.dataset.resourcePath]: value });
+			};
+
 			input.addEventListener("keydown", async (event) => {
 				if (event.key !== "Enter") {
 					return;
 				}
 
-				const value = Number(input.value);
-				if (!Number.isFinite(value)) {
-					return;
-				}
-
-				await this.actor.update({ [input.dataset.resourcePath]: value });
+				await submit();
 				input.blur();
 			});
+			input.addEventListener("blur", () => void submit());
 		}
 	}
 
@@ -272,6 +303,11 @@ class ActorDisplay extends HandlebarsApplicationMixin(ApplicationV2) {
 		if (position?.left != null && position?.top != null) {
 			this.setPosition(position);
 		}
+	}
+
+	/** Dismiss this actor display until the user controls a token again. */
+	onDismiss() {
+		dismissActorDisplay();
 	}
 
 	/** @param {PointerEvent} event The action event. @param {HTMLElement} target The action target. */

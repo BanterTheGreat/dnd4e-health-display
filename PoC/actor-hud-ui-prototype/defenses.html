@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>Actor HUD Defenses — Throwaway Prototype</title>
+		<link rel="stylesheet" href="defenses.css">
+	</head>
+	<body>
+		<div class="foundry-stage" aria-hidden="true"></div>
+		<main>
+			<article class="hud-shell">
+				<header>
+					<div class="portrait">B</div>
+					<div><h1>Beltane</h1><strong>Level 10 Warlord</strong><small>Banner of the Last Watch</small></div>
+				</header>
+				<section class="vitals dial-vitals" aria-label="Vitals Variant B baseline">
+					<div class="life-dial" style="--hp-angle:231deg"><div><span>HP</span><strong>43</strong><small>of 67</small></div></div>
+					<div class="dial-counters">
+						<div class="counter temp-counter"><i>✦</i><span>Temp HP</span><strong>+8</strong></div>
+						<div class="counter surge-counter"><i>✧</i><span>Surges</span><strong>7<small> / 12</small></strong></div>
+						<div class="mini-surges" aria-label="Seven of twelve healing surges remaining"><i class="is-filled"></i><i class="is-filled"></i><i class="is-filled"></i><i class="is-filled"></i><i class="is-filled"></i><i class="is-filled"></i><i class="is-filled"></i><i></i><i></i><i></i><i></i><i></i></div>
+					</div>
+				</section>
+				<div id="defenses-root"></div>
+			</article>
+		</main>
+
+		<nav class="prototype-switcher" aria-label="Defense prototype variants">
+			<button type="button" data-direction="-1" aria-label="Previous variant">←</button>
+			<div><small>Throwaway defense prototype · Vitals B baseline</small><strong id="variant-label"></strong></div>
+			<button type="button" data-direction="1" aria-label="Next variant">→</button>
+		</nav>
+		<script type="module" src="defenses.js"></script>
+	</body>
+</html>

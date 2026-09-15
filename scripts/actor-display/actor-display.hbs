@@ -6,28 +6,31 @@
 			<strong>{{levelAndClass}}</strong>
 			{{#if subtitle}}<small>{{subtitle}}</small>{{/if}}
 		</div>
+		<button type="button" class="dnd4e-info-actor-display__close" data-action="dismiss" aria-label="Close actor display" title="Close">×</button>
 	</header>
 
 	<section class="dnd4e-info-actor-display__vitals">
-		<label class="dnd4e-info-actor-display__hp-value">
-			<span>Hit Points</span>
-			<input type="number" value="{{hp.value}}" data-resource-path="system.attributes.hp.value">
-			<small>of {{hp.maximum}}</small>
-		</label>
-		<div class="dnd4e-info-actor-display__hp-segments" role="img" aria-label="Hit points: {{hp.value}} of {{hp.maximum}}">
-			{{#each hp.segments}}<i class="{{#if filled}}is-filled{{/if}}"></i>{{/each}}
+		<div class="dnd4e-info-actor-display__life-dial" style="--hp-angle: {{hp.dialAngle}}deg; --hp-segment-angle: {{hp.dialSegmentAngle}}deg">
+			<label>
+				<span>HP</span>
+				<input type="number" value="{{hp.value}}" data-resource-path="system.attributes.hp.value">
+				<small>of {{hp.maximum}}</small>
+			</label>
 		</div>
-		<label class="dnd4e-info-actor-display__temp-hp">
-			<span>Temp HP</span>
-			<input type="number" value="{{tempHp}}" data-resource-path="system.attributes.temphp.value">
-		</label>
-		<label class="dnd4e-info-actor-display__surge-value">
-			<span>Healing Surges</span>
-			<input type="number" value="{{surges.value}}" data-resource-path="system.details.surges.value">
-			<small>of {{surges.maximum}}</small>
-		</label>
-		<div class="dnd4e-info-actor-display__surge-segments" style="--surge-count: {{surges.maximum}}" role="img" aria-label="Healing surges: {{surges.value}} of {{surges.maximum}}">
-			{{#each surges.segments}}<i class="{{#if filled}}is-filled{{/if}}"></i>{{/each}}
+		<div class="dnd4e-info-actor-display__vital-counters">
+			<label class="dnd4e-info-actor-display__vital-counter dnd4e-info-actor-display__vital-counter--temp">
+				<i class="fa-solid fa-shield" aria-hidden="true"></i>
+				<span>Temp HP</span>
+				<div><b>+</b><input type="number" value="{{tempHp}}" data-resource-path="system.attributes.temphp.value"></div>
+			</label>
+			<label class="dnd4e-info-actor-display__vital-counter dnd4e-info-actor-display__vital-counter--surges">
+				<i class="fa-solid fa-heart-pulse" aria-hidden="true"></i>
+				<span>Surges</span>
+				<div><input type="number" value="{{surges.value}}" data-resource-path="system.details.surges.value"><small> / {{surges.maximum}}</small></div>
+			</label>
+			<div class="dnd4e-info-actor-display__surge-segments" style="--surge-count: {{surges.maximum}}" role="img" aria-label="Healing surges: {{surges.value}} of {{surges.maximum}}">
+				{{#each surges.segments}}<i class="{{#if filled}}is-filled{{/if}}"></i>{{/each}}
+			</div>
 		</div>
 	</section>
 
@@ -56,11 +59,15 @@
 				<section class="dnd4e-info-actor-display__group">
 					<h2>{{name}} <small>{{powers.length}}</small></h2>
 					{{#each powers}}
-						<div class="dnd4e-info-actor-display__power {{usageClass}}{{#if depleted}} is-depleted{{/if}}" data-action="power" data-item-id="{{id}}" data-item-tooltip data-tooltip-direction="RIGHT" data-power-usage="{{usageClass}}" role="button" tabindex="0">
-							<i class="{{icon}}" aria-hidden="true"></i>
-							<strong>{{name}}</strong>
-							{{#if showUses}}<small>{{uses}}</small>{{/if}}
-							{{#if depleted}}<button type="button" data-action="refreshPower" data-item-id="{{id}}" title="Refresh power"><i class="fa-solid fa-rotate-right"></i></button>{{/if}}
+						<div class="dnd4e-info-actor-display__power {{usageClass}} {{#if inlineDetails}}has-inline-details{{/if}}{{#if depleted}} is-depleted{{/if}}" data-action="power" data-item-id="{{id}}" {{#unless inlineDetails}}data-item-tooltip data-tooltip-direction="RIGHT" data-power-usage="{{usageClass}}"{{/unless}} role="button" tabindex="0">
+							<div class="dnd4e-info-actor-display__power-header">
+								<i class="{{icon}}" aria-hidden="true"></i>
+								<strong>{{name}}</strong>
+								{{#if showUses}}<small>{{uses}}</small>{{/if}}
+								{{#if depleted}}<button type="button" data-action="refreshPower" data-item-id="{{id}}" title="Refresh power"><i class="fa-solid fa-rotate-right"></i></button>{{/if}}
+							</div>
+							{{#if flavour}}{{#unless depleted}}<p class="dnd4e-info-actor-display__power-flavour">{{flavour}}</p>{{/unless}}{{/if}}
+							{{#if inlineDetails}}<div class="dnd4e-info-actor-display__power-details {{inlineDetailsClass}}">{{{inlineDetails}}}</div>{{/if}}
 						</div>
 					{{/each}}
 				</section>
@@ -77,6 +84,15 @@
 
 		{{#if isFeatures}}
 			{{#each featureCategories}}
+				<section class="dnd4e-info-actor-display__group">
+					<h2>{{name}}</h2>
+					{{#each features}}<button type="button" class="dnd4e-info-actor-display__feature" data-action="feature" data-item-id="{{id}}" data-item-tooltip data-tooltip-direction="RIGHT"><i class="fa-solid fa-book"></i><strong>{{name}}</strong></button>{{/each}}
+				</section>
+			{{/each}}
+		{{/if}}
+
+		{{#if isTraits}}
+			{{#each traitCategories}}
 				<section class="dnd4e-info-actor-display__group">
 					<h2>{{name}}</h2>
 					{{#each features}}<button type="button" class="dnd4e-info-actor-display__feature" data-action="feature" data-item-id="{{id}}" data-item-tooltip data-tooltip-direction="RIGHT"><i class="fa-solid fa-book"></i><strong>{{name}}</strong></button>{{/each}}
@@ -103,6 +119,7 @@
 				</section>
 			{{/each}}
 		{{/if}}
+
 	</div>
 
 	<section class="dnd4e-info-actor-display__quick-actions" aria-label="Quick actions">

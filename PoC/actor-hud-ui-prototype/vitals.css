@@ -74,6 +74,7 @@ header small { color: #a98c70; font-family: Georgia, serif; font-style: italic; 
 .context-strip { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid rgb(153 116 86 / 30%); background: #19191b; }
 .context-strip span { padding: 0.62rem 0.2rem; border-right: 1px solid rgb(153 116 86 / 20%); color: #918478; font-size: 0.56rem; text-align: center; }
 .context-strip b { color: #ead4b7; font-size: 0.75rem; }
+.context-strip i { display: inline-block; margin-right: 0.08rem; color: #bda684; font-size: 1rem; font-style: normal; line-height: 0; vertical-align: -0.1em; }
 
 /* A — large numerical hierarchy, overlay shield, tactile surge coins. */
 .ledger-vitals { position: relative; display: grid; grid-template-columns: 4.8rem 1fr; gap: 0.5rem 0.65rem; }

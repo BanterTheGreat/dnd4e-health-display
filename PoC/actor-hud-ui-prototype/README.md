@@ -28,4 +28,4 @@ This prototype uses realistically dense sample data and does not mutate Foundry 
 Power buttons preview used/depleted states; skills, feats, and quick actions report their intended action. It is deliberately isolated from `module.json` and production module code.
 # Actor HUD UI prototypes
 
-Open `index.html` for the complete HUD explorations. Open `vitals.html` for three throwaway alternatives focused only on Hit Points, Temporary Hit Points, and Healing Surges. Use the on-screen arrows or the keyboard arrow keys to switch variants; the selected variant is stored in the `?variant=` URL parameter.
+Open `index.html` for the complete HUD explorations. Open `vitals.html` for three throwaway alternatives focused only on Hit Points, Temporary Hit Points, and Healing Surges. Open `defenses.html` for three compact defense-value rails on the Vitals Variant B baseline: Reference Rail, AC Anchor, and Inline Label Rail. Each page uses on-screen arrows or the keyboard arrow keys to switch variants; the selected variant is stored in the `?variant=` URL parameter.

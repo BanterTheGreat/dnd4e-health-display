@@ -1,3 +1,5 @@
+import { generateInlinePowerDetails } from "./actor-display-tooltips.js";
+
 const POWER_CATEGORY_RULES = [
 	["Standard", ["standard"]],
 	["Move", ["move"]],
@@ -23,9 +25,9 @@ const FEATURE_CATEGORY_RULES = [
  *
  * @param {Token} token The displayed canvas token.
  * @param {string} activeTab The currently selected inventory tab.
- * @returns {object}
+ * @returns {Promise<object>}
  */
-export function getActorDisplayData(token, activeTab) {
+export async function getActorDisplayData(token, activeTab) {
 	const actor = token.actor;
 	const hp = actor.system?.attributes?.hp ?? {};
 	const surges = actor.system?.details?.surges ?? {};
@@ -33,6 +35,8 @@ export function getActorDisplayData(token, activeTab) {
 	const hpMaximum = Math.max(Number(hp.max) || 0, 1);
 	const surgeValue = Math.max(Number(surges.value) || 0, 0);
 	const surgeMaximum = Math.max(Number(surges.max) || 0, 0);
+	const hpSegmentCount = actor.type === "Player Character" ? 6 : 4;
+	const filledHpSegments = getFilledSegmentCount(hpValue, hpMaximum, hpSegmentCount);
 
 	return {
 		name: actor.name,
@@ -42,7 +46,8 @@ export function getActorDisplayData(token, activeTab) {
 		hp: {
 			value: hpValue,
 			maximum: hpMaximum,
-			segments: getSegments(hpValue, hpMaximum, 6),
+			dialAngle: filledHpSegments * (360 / hpSegmentCount),
+			dialSegmentAngle: actor.type === "Player Character" ? 60 : 90,
 		},
 		tempHp: Number(actor.system?.attributes?.temphp?.value) || 0,
 		surges: {
@@ -56,10 +61,12 @@ export function getActorDisplayData(token, activeTab) {
 		isPowers: activeTab === "powers",
 		isSkills: activeTab === "skills",
 		isFeatures: activeTab === "features",
+		isTraits: activeTab === "traits",
 		isItems: activeTab === "items",
-		powerCategories: getPowerCategories(actor),
+		powerCategories: await getPowerCategories(actor),
 		skills: getSkills(actor),
 		featureCategories: getFeatureCategories(actor),
+		traitCategories: getTraitCategories(actor),
 		itemCategories: getItemCategories(actor),
 		quickActions: getQuickActions(actor),
 	};
@@ -109,15 +116,31 @@ function getSegments(value, maximum, count) {
 		return [];
 	}
 
-	const filled = maximum > 0 ? Math.ceil((Math.max(value, 0) / maximum) * count) : 0;
+	const filled = getFilledSegmentCount(value, maximum, count);
 	return Array.from({ length: count }, (_unused, index) => ({ filled: index < filled }));
+}
+
+/**
+ * Convert a resource value into the count of whole display segments it fills.
+ *
+ * @param {number} value Current resource value.
+ * @param {number} maximum Resource maximum.
+ * @param {number} count Number of display segments.
+ * @returns {number}
+ */
+function getFilledSegmentCount(value, maximum, count) {
+	if (maximum <= 0 || count <= 0) {
+		return 0;
+	}
+
+	return Math.min(count, Math.ceil((Math.max(value, 0) / maximum) * count));
 }
 
 /**
  * Build defense and initiative readouts.
  *
  * @param {Actor} actor The displayed actor.
- * @returns {Array<object>}
+ * @returns {Promise<Array<object>>}
  */
 function getStats(actor) {
 	return [
@@ -143,7 +166,9 @@ function getTabs(actor, activeTab) {
 		...(actor.type === "Player Character" ? [
 			{ key: "features", label: "Feats", icon: "fa-solid fa-book", active: activeTab === "features" },
 			{ key: "items", label: "Items", icon: "fa-solid fa-treasure-chest", active: activeTab === "items" },
-		] : []),
+		] : [
+			{ key: "traits", label: "Traits", icon: "fa-solid fa-book", active: activeTab === "traits" },
+		]),
 	];
 }
 
@@ -153,26 +178,34 @@ function getTabs(actor, activeTab) {
  * @param {Actor} actor The displayed actor.
  * @returns {Array<object>}
  */
-function getPowerCategories(actor) {
+async function getPowerCategories(actor) {
 	const powers = Array.from(actor.items ?? []).filter((item) => item.type === "power");
 	const knownActions = POWER_CATEGORY_RULES.flatMap(([_name, actions]) => actions);
 
-	return POWER_CATEGORY_RULES.map(([name, actions]) => ({
+	const categories = POWER_CATEGORY_RULES.map(([name, actions]) => ({
 		name,
 		powers: powers
 			.filter((power) => actions.length
 				? actions.includes(power.system?.actionType)
 				: !knownActions.includes(power.system?.actionType))
 			.sort((left, right) => getPowerOrder(left) - getPowerOrder(right) || left.name.localeCompare(right.name))
-			.map(mapPower),
+			.map((power) => mapPower(power, actor)),
 	})).filter((category) => category.powers.length);
+
+	return Promise.all(categories.map(async (category) => ({
+		...category,
+		powers: await Promise.all(category.powers),
+	})));
 }
 
-/** @param {Item} power The power to map. */
-function mapPower(power) {
+/** @param {Item} power The power to map. @param {Actor} actor The power's actor. */
+async function mapPower(power, actor) {
 	const uses = power.system?.uses ?? {};
 	const maximum = Number(uses.max) || 0;
 	const value = Number(uses.value) || 0;
+	const inlineDetails = actor.type === "NPC"
+		? await generateInlinePowerDetails(actor, power)
+		: { html: "", cssClass: "" };
 	return {
 		id: power.id,
 		name: power.name,
@@ -181,7 +214,27 @@ function mapPower(power) {
 		showUses: maximum > 1,
 		uses: `${value} / ${maximum}`,
 		depleted: maximum > 0 && value <= 0,
+		flavour: actor.type === "Player Character" ? getPowerFlavour(power) : "",
+		inlineDetails: inlineDetails.html,
+		inlineDetailsClass: inlineDetails.cssClass,
 	};
+}
+
+/**
+ * Extract a power's short chat description for its compact PC list entry.
+ *
+ * @param {Item} power The power whose flavour text is needed.
+ * @returns {string}
+ */
+function getPowerFlavour(power) {
+	const html = power.system?.description?.chat ?? "";
+	if (!html) {
+		return "";
+	}
+
+	const element = document.createElement("div");
+	element.innerHTML = html;
+	return element.textContent?.trim() ?? "";
 }
 
 /** @param {Item} power The power to order. */
@@ -224,6 +277,27 @@ function getSkills(actor) {
 /** @param {Actor} actor The displayed actor. */
 function getFeatureCategories(actor) {
 	return FEATURE_CATEGORY_RULES.map(([name, type]) => ({
+		name,
+		features: Array.from(actor.items ?? [])
+			.filter((item) => item.type === "feature" && item.system?.featureType === type)
+			.sort((left, right) => left.name.localeCompare(right.name))
+			.map((item) => ({ id: item.id, name: item.name })),
+	})).filter((category) => category.features.length);
+}
+
+/**
+ * Group NPC traits and racial feats, both represented by feature items.
+ *
+ * @param {Actor} actor The displayed actor.
+ * @returns {Array<object>}
+ */
+function getTraitCategories(actor) {
+	const rules = [
+		["Traits", "trait"],
+		["Racial Feats", "race"],
+	];
+
+	return rules.map(([name, type]) => ({
 		name,
 		features: Array.from(actor.items ?? [])
 			.filter((item) => item.type === "feature" && item.system?.featureType === type)

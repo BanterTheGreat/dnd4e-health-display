@@ -81,7 +81,7 @@ async function generateSystemTooltip(actor, item) {
  * @param {Item} power The power item.
  * @returns {Promise<string>}
  */
-async function generatePowerTooltip(actor, power) {
+export async function generatePowerTooltip(actor, power) {
 	const system = power.system ?? {};
 	const hasAttack = Boolean(system.attack?.isAttack);
 	let attackBonus = 0;
@@ -139,6 +139,40 @@ async function generatePowerTooltip(actor, power) {
 		relativeTo: actor,
 		rollData,
 	});
+}
+
+/**
+ * Render the rules content displayed below an NPC power's header.
+ *
+ * Auto-generated powers use the compact module card. Custom-authored powers
+ * retain the DnD4e system's item-card formatting as a reliable fallback.
+ *
+ * @param {Actor} actor The power's actor.
+ * @param {Item} power The power item.
+ * @returns {Promise<{html: string, cssClass: string}>}
+ */
+export async function generateInlinePowerDetails(actor, power) {
+	const customPower = Boolean(power.system?.autoGenChatPowerCard);
+	if (customPower) {
+		try {
+			const html = await generatePowerTooltip(actor, power);
+			if (html) {
+				return { html, cssClass: "is-custom" };
+			}
+		} catch (error) {
+			console.warn(`Dnd4e Info Displays | Falling back to the system card for ${power.name}.`, error);
+		}
+	}
+
+	try {
+		return {
+			html: await generateSystemTooltip(actor, power),
+			cssClass: "is-system",
+		};
+	} catch (error) {
+		console.error(`Dnd4e Info Displays | Could not render inline details for ${power.name}.`, error);
+		return { html: "", cssClass: "" };
+	}
 }
 
 /** @param {Item} power @param {number} attackBonus @param {boolean} hasAttack */
