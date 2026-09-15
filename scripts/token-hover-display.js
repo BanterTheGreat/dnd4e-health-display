@@ -291,7 +291,7 @@ function getFilledSegments(value, maximum, segmentCount = HEALTH_SEGMENTS) {
  * Return only the special 4e monster classifications requested by the display.
  *
  * @param {Actor} actor The displayed actor.
- * @returns {{key: string, label: string, icon: string}|null}
+ * @returns {{key: string, label: string, icon?: string}|null}
  */
 function getSpecialRole(actor) {
 	const role = actor.system?.details?.role ?? {};
@@ -312,11 +312,18 @@ function getSpecialRole(actor) {
 		};
 	}
 
+	if (role.secondary === "elite" || role.primary === "elite") {
+		return {
+			key: "elite",
+			label: "Elite",
+			icon: "fa-solid fa-diamond",
+		};
+	}
+
 	if (role.secondary === "minion" || role.primary === "minion") {
 		return {
 			key: "minion",
 			label: "Minion",
-			icon: "fa-solid fa-angle-down",
 		};
 	}
 

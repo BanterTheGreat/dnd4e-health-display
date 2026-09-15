@@ -1,12 +1,12 @@
 <div class="dnd4e-health-display__panel{{#if role}} is-{{role.key}}{{/if}}">
 	<header class="dnd4e-health-display__heading">
-		{{#if role}}
+		{{#if role.icon}}
 			<span class="dnd4e-health-display__role" title="{{role.label}}" aria-label="{{role.label}}">
 				<i class="{{role.icon}}" aria-hidden="true"></i>
 			</span>
 		{{/if}}
 		<span class="dnd4e-health-display__name">{{name}}</span>
-		{{#if role}}
+		{{#if role.icon}}
 			<span class="dnd4e-health-display__role" title="{{role.label}}" aria-hidden="true">
 				<i class="{{role.icon}}" aria-hidden="true"></i>
 			</span>
