@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>Actor HUD Vitals — Throwaway Prototype</title>
+		<link rel="stylesheet" href="vitals.css">
+	</head>
+	<body>
+		<div class="foundry-stage" aria-hidden="true"></div>
+		<main>
+			<article class="hud-shell">
+				<header>
+					<div class="portrait">B</div>
+					<div><h1>Beltane</h1><strong>Level 10 Warlord</strong><small>Banner of the Last Watch</small></div>
+				</header>
+				<div id="vitals-root"></div>
+				<div class="context-strip"><span>⬟ <b>24</b> AC</span><span>♜ <b>23</b> Fort</span><span>ϟ <b>21</b> Ref</span><span>● <b>20</b> Will</span></div>
+			</article>
+		</main>
+
+		<nav class="prototype-switcher" aria-label="Prototype variants">
+			<button type="button" data-direction="-1" aria-label="Previous variant">←</button>
+			<div><small>Throwaway vitals prototype</small><strong id="variant-label"></strong></div>
+			<button type="button" data-direction="1" aria-label="Next variant">→</button>
+		</nav>
+		<script type="module" src="vitals.js"></script>
+	</body>
+</html>

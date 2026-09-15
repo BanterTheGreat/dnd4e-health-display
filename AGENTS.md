@@ -1,27 +1,36 @@
 # DnD4e Info Displays
 
-Foundry VTT v14 module for the DnD4e system that provides compact actor and health displays. It targets the DnD4e system's [`0.9.3` source](https://github.com/EndlesNights/dnd4eBeta/tree/0.9.3); confirm system APIs against that tag before relying on current upstream behavior.
+Foundry VTT v14 module for the DnD4e system that provides two independent information displays under one package. It targets the DnD4e system's [`0.9.3` source](https://github.com/EndlesNights/dnd4eBeta/tree/0.9.3); confirm system APIs against that tag or the locally installed system before relying on current upstream behavior.
 
 ## Layout
 
 - `main.js` initializes the health-display and actor-display modules.
-- `scripts/health-display/` owns the token-hover health display and its presentation data.
-- `scripts/actor-display/` owns the controlled-token actor display, inventory navigation, and actions.
+- `scripts/health-display/` owns the token-hover health display, its presentation data, and effect mapping.
+- `scripts/actor-display/actor-display.js` owns the controlled-token HUD lifecycle, interactions, dragging, and document mutations.
+- `scripts/actor-display/actor-display-data.js` converts DnD4e actor and item documents into template-ready display data.
+- `scripts/actor-display/actor-display-tooltips.js` lazily renders and caches HTML rules tooltips.
+- `scripts/actor-display/actor-display.hbs` is the actor HUD's single Handlebars part.
 - `styles/` contains one stylesheet per display module.
+- `PoC/actor-hud-ui-prototype/` contains throwaway visual explorations. Treat these as design references, not production code.
 
 ## Architecture
 
 - Each display module exposes registration functions for settings and runtime hooks; `main.js` is the only caller.
+- Health display is the token-hover submodule. It presents HP state, actor role styling, effects, and optional NPC traits without mutating the actor.
 - The actor display uses one controlled token, with an assigned or owned player-character fallback for non-GM users.
+- The actor display is a frameless `ApplicationV2` appended to `document.body`. Its identity header is the drag handle, and its client setting stores the last screen position.
+- Actor-display tabs are module-owned buttons and state, rather than Foundry's tab-group controller. Powers and skills roll through DnD4e actor APIs; feats and items roll or open their sheets; equipment toggles update the embedded item.
+- Item tooltips load only on first hover. Auto-generated power cards receive compact custom formatting; custom-authored powers, feats, and inventory use `dnd4e.compatibility.tah.TokenBarHooks.generateItemTooltip`. Cache both `data-tooltip-html` and `data-tooltip-class`, since Foundry reads those attributes on later hovers.
 - The manifest retains the `dnd4e-health-display` package ID so existing installations and client settings continue working under the new title.
 
 ## Working conventions
 
 - We don't need to make Markdown research documents.
-- Use ES modules, Foundry hooks, and the DnD4e system API; preserve v12 compatibility unless intentionally upgrading it.
+- Use ES modules, Foundry hooks, `ApplicationV2`, and the DnD4e system API. The module intentionally targets Foundry v14.
 - Use braced, multiline `if` blocks. Document methods with JSDoc, using multiline JSDoc blocks whenever practical.
 - Prefer Foundry APIs (`foundry.utils`, document flags, embedded documents) and keep asynchronous document changes awaited.
-- Keep UI markup in Handlebars parts and presentation rules in the dialog stylesheet.
+- Keep UI markup in the relevant Handlebars part, presentation data in its data module, interaction logic in its controller, and presentation rules in the matching display stylesheet.
 - Match the existing simple JavaScript style: direct Foundry globals, small focused helpers, pragmatic comments, and short guard clauses. Document reusable module methods with JSDoc when it clarifies their contract.
-- Changes that affect initial hooks or the manifest should be tested by reloading Foundry and checking the browser console. There is no automated test or build setup.
+- There is no automated test or build setup. Run `node --check` on changed JavaScript and `git diff --check`; then reload Foundry and inspect the browser console for hook, manifest, template, and interaction changes.
+- For actor-display UI changes, manually switch controlled tokens and all available tabs, verify scrolling at 1920×1080, drag and reopen the HUD, and hover the same power or item twice to exercise cached tooltips.
 - Changelog entries are release summaries, not per-change notes. Since the previous version, record new features and changed behavior in concise prose suitable for future regression review.

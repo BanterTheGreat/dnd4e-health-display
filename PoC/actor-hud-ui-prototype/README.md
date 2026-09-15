@@ -26,3 +26,6 @@ This prototype uses realistically dense sample data and does not mutate Foundry 
 - HP, temporary HP, healing surges, and quick-access actions
 
 Power buttons preview used/depleted states; skills, feats, and quick actions report their intended action. It is deliberately isolated from `module.json` and production module code.
+# Actor HUD UI prototypes
+
+Open `index.html` for the complete HUD explorations. Open `vitals.html` for three throwaway alternatives focused only on Hit Points, Temporary Hit Points, and Healing Surges. Use the on-screen arrows or the keyboard arrow keys to switch variants; the selected variant is stored in the `?variant=` URL parameter.
