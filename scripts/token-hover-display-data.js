@@ -7,10 +7,13 @@ const PC_HEALTH_SEGMENTS = 6;
  * Build hover-display presentation data without exposing exact hit point values.
  *
  * @param {Token} token The hovered token.
- * @param {boolean} useEffectDescriptions Whether effect descriptions replace names.
+ * @param {object} options Current presentation options.
+ * @param {boolean} options.useEffectDescriptions Whether effect descriptions replace names.
+ * @param {boolean} options.expandTraits Whether NPC trait descriptions are fully expanded.
+ * @param {boolean} options.showTraits Whether NPC trait descriptions should be included.
  * @returns {object}
  */
-export function getTokenHoverDisplayData(token, useEffectDescriptions) {
+export function getTokenHoverDisplayData(token, { useEffectDescriptions, expandTraits, showTraits }) {
 	const actor = token.actor;
 	const hp = actor.system?.attributes?.hp ?? {};
 	const value = Number(hp.value);
@@ -32,7 +35,8 @@ export function getTokenHoverDisplayData(token, useEffectDescriptions) {
 			filled: index < filledSegments,
 		})),
 		turnDistance: getTurnDistance(token),
-		traits: getNpcTraits(actor),
+		traits: showTraits ? getNpcTraits(actor) : [],
+		expandTraits,
 		...effectPresentation,
 	};
 }

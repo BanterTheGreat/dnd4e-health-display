@@ -379,6 +379,19 @@
 	line-height: 1.25;
 }
 
+.dnd4e-health-display__trait-text {
+	display: -webkit-box;
+	overflow: hidden;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 3;
+}
+
+.dnd4e-health-display__traits.is-expanded .dnd4e-health-display__trait-text {
+	display: block;
+	overflow: visible;
+	-webkit-line-clamp: initial;
+}
+
 .dnd4e-health-display__traits li::before {
 	position: absolute;
 	top: 0.48rem;

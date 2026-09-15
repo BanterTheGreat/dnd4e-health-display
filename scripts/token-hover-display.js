@@ -5,6 +5,7 @@ const DISPLAY_TEMPLATE = "modules/dnd4e-health-display/scripts/token-hover-displ
 const STYLESHEET_ID = "dnd4e-health-display-styles";
 const STYLESHEET_PATH = "modules/dnd4e-health-display/styles/token-hover-display.css";
 const EFFECT_DESCRIPTIONS_SETTING = "shiftEffectDescriptions";
+const SHOW_TRAITS_SETTING = "showNpcTraits";
 
 let hoveredToken = null;
 let renderSequence = 0;
@@ -19,11 +20,17 @@ export function registerTokenHoverDisplaySettings() {
 		config: true,
 		type: Boolean,
 		default: true,
-		onChange: () => {
-			if (hoveredToken) {
-				void renderDisplay(hoveredToken);
-			}
-		},
+		onChange: refreshHoveredToken,
+	});
+
+	game.settings.register("dnd4e-health-display", SHOW_TRAITS_SETTING, {
+		name: "Show NPC traits",
+		hint: "Show NPC trait descriptions in the token hover display. Traits remain visible only to GMs.",
+		scope: "client",
+		config: true,
+		type: Boolean,
+		default: true,
+		onChange: refreshHoveredToken,
 	});
 }
 
@@ -128,7 +135,11 @@ async function renderDisplay(token) {
 
 	const sequence = ++renderSequence;
 	const render = foundry.applications?.handlebars?.renderTemplate ?? globalThis.renderTemplate;
-	const html = await render(DISPLAY_TEMPLATE, getTokenHoverDisplayData(token, shouldShowDescriptions()));
+	const html = await render(DISPLAY_TEMPLATE, getTokenHoverDisplayData(token, {
+		useEffectDescriptions: shouldShowDescriptions(),
+		expandTraits: shiftHeld,
+		showTraits: game.settings.get("dnd4e-health-display", SHOW_TRAITS_SETTING),
+	}));
 
 	if (sequence !== renderSequence || hoveredToken?.id !== token.id) {
 		return;
@@ -176,6 +187,13 @@ function clearModifiers() {
 
 	shiftHeld = false;
 
+	if (hoveredToken) {
+		void renderDisplay(hoveredToken);
+	}
+}
+
+/** Refresh the currently hovered token, if any. */
+function refreshHoveredToken() {
 	if (hoveredToken) {
 		void renderDisplay(hoveredToken);
 	}

@@ -26,11 +26,11 @@
 	</div>
 
 	{{#if traits.length}}
-		<section class="dnd4e-health-display__traits" aria-label="NPC traits">
+		<section class="dnd4e-health-display__traits{{#if expandTraits}} is-expanded{{/if}}" aria-label="NPC traits">
 			<h3>Traits</h3>
 			<ul>
 				{{#each traits}}
-					<li>{{description}}</li>
+					<li><span class="dnd4e-health-display__trait-text">{{description}}</span></li>
 				{{/each}}
 			</ul>
 		</section>
