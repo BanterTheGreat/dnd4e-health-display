@@ -172,7 +172,7 @@ function getEffectCombatStats(actor, effects) {
 		getModifierStat("fa-solid fa-person-running", "Speed from shown effects", totals.speed),
 		getModifierStat("fa-solid fa-shield-halved", "Armor Class from shown effects", totals.defences + totals.ac),
 		getModifierStat("fa-solid fa-dumbbell", "Fortitude from shown effects", totals.defences + totals.fort),
-		getModifierStat("fa-solid fa-arrows-left-right", "Reflex from shown effects", totals.defences + totals.ref),
+		getModifierStat("fa-solid fa-bolt", "Reflex from shown effects", totals.defences + totals.ref),
 		getModifierStat("fa-solid fa-brain", "Will from shown effects", totals.defences + totals.wil),
 	].filter((stat) => stat.value !== "+0");
 }
