@@ -148,13 +148,16 @@ function getDisplayData(token, actor) {
 	const hp = actor.system?.attributes?.hp ?? {};
 	const value = Number(hp.value);
 	const maximum = Number(hp.max);
-	const filledSegments = getFilledSegments(value, maximum);
+	const role = getSpecialRole(actor);
+	const segmentCount = role?.key === "minion" ? 1 : HEALTH_SEGMENTS;
+	const filledSegments = getFilledSegments(value, maximum, segmentCount);
 	const shownEffects = getShownEffects(actor);
 
 	return {
 		name: token.name || actor.name,
-		role: getSpecialRole(actor),
-		segments: Array.from({ length: HEALTH_SEGMENTS }, (_unused, index) => ({
+		role,
+		healthLabel: role?.key === "minion" ? "Minion health" : "Health shown in quarters",
+		segments: Array.from({ length: segmentCount }, (_unused, index) => ({
 			filled: index < filledSegments,
 		})),
 		effects: getEffectDisplayData(shownEffects),
@@ -273,38 +276,51 @@ function getModifierStat(icon, label, value) {
  *
  * @param {number} value Current hit points.
  * @param {number} maximum Maximum hit points.
+ * @param {number} [segmentCount=HEALTH_SEGMENTS] Number of segments in the bar.
  * @returns {number}
  */
-function getFilledSegments(value, maximum) {
+function getFilledSegments(value, maximum, segmentCount = HEALTH_SEGMENTS) {
 	if (!Number.isFinite(value) || !Number.isFinite(maximum) || maximum <= 0 || value <= 0) {
 		return 0;
 	}
 
-	return Math.min(HEALTH_SEGMENTS, Math.ceil((value / maximum) * HEALTH_SEGMENTS));
+	return Math.min(segmentCount, Math.ceil((value / maximum) * segmentCount));
 }
 
 /**
  * Return only the special 4e monster classifications requested by the display.
  *
  * @param {Actor} actor The displayed actor.
- * @returns {string}
+ * @returns {{key: string, label: string, icon: string}|null}
  */
 function getSpecialRole(actor) {
 	const role = actor.system?.details?.role ?? {};
 
+	if (role.secondary === "solo" || role.primary === "solo") {
+		return {
+			key: "solo",
+			label: "Solo",
+			icon: "fa-solid fa-skull",
+		};
+	}
+
 	if (role.leader) {
-		return "Leader";
+		return {
+			key: "leader",
+			label: "Leader",
+			icon: "fa-solid fa-star",
+		};
 	}
 
 	if (role.secondary === "minion" || role.primary === "minion") {
-		return "Minion";
+		return {
+			key: "minion",
+			label: "Minion",
+			icon: "fa-solid fa-angle-down",
+		};
 	}
 
-	if (role.secondary === "solo" || role.primary === "solo") {
-		return "Solo";
-	}
-
-	return "";
+	return null;
 }
 
 /**

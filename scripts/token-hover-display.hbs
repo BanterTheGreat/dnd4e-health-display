@@ -1,12 +1,19 @@
-<div class="dnd4e-health-display__panel">
+<div class="dnd4e-health-display__panel{{#if role}} is-{{role.key}}{{/if}}">
 	<header class="dnd4e-health-display__heading">
+		{{#if role}}
+			<span class="dnd4e-health-display__role" title="{{role.label}}" aria-label="{{role.label}}">
+				<i class="{{role.icon}}" aria-hidden="true"></i>
+			</span>
+		{{/if}}
 		<span class="dnd4e-health-display__name">{{name}}</span>
 		{{#if role}}
-			<span class="dnd4e-health-display__role">{{role}}</span>
+			<span class="dnd4e-health-display__role" title="{{role.label}}" aria-hidden="true">
+				<i class="{{role.icon}}" aria-hidden="true"></i>
+			</span>
 		{{/if}}
 	</header>
 
-	<div class="dnd4e-health-display__bar" role="img" aria-label="Health shown in quarters">
+	<div class="dnd4e-health-display__bar" role="img" aria-label="{{healthLabel}}">
 		{{#each segments}}
 			<span class="dnd4e-health-display__segment{{#if filled}} is-filled{{/if}}"></span>
 		{{/each}}

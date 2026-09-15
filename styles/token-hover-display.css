@@ -29,7 +29,7 @@
 
 .dnd4e-health-display__heading {
 	display: flex;
-	align-items: baseline;
+	align-items: center;
 	justify-content: center;
 	gap: 0.45rem;
 	box-sizing: border-box;
@@ -55,10 +55,82 @@
 }
 
 .dnd4e-health-display__role {
-	font-size: 0.82rem;
-	font-variant: small-caps;
-	letter-spacing: 0.06em;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: 0 0 auto;
+	line-height: 1;
 	opacity: 0.85;
+}
+
+.dnd4e-health-display__role i {
+	display: block;
+	font-size: 1rem;
+	line-height: 1;
+}
+
+.dnd4e-health-display__panel.is-solo .dnd4e-health-display__heading {
+	border-color: rgb(194 48 52 / 95%);
+	background: linear-gradient(180deg, rgb(42 7 10 / 94%), rgb(8 8 9 / 92%));
+	box-shadow: 0 0.15rem 0.45rem rgb(0 0 0 / 70%), 0 0 0.8rem rgb(170 18 25 / 55%);
+}
+
+.dnd4e-health-display__panel.is-solo .dnd4e-health-display__name {
+	font-size: 1.75rem;
+	letter-spacing: 0.055em;
+	text-transform: uppercase;
+}
+
+.dnd4e-health-display__panel.is-solo .dnd4e-health-display__role {
+	color: #ff8d83;
+	opacity: 1;
+}
+
+.dnd4e-health-display__panel.is-solo .dnd4e-health-display__bar {
+	height: 1.45rem;
+	border-color: #c23034;
+	box-shadow: inset 0 0 0.25rem #000, 0 0 0 1px rgb(0 0 0 / 80%), 0 0 0.7rem rgb(170 18 25 / 50%);
+}
+
+.dnd4e-health-display__panel.is-leader .dnd4e-health-display__heading {
+	border-color: rgb(202 160 63 / 90%);
+	background: linear-gradient(180deg, rgb(47 35 11 / 92%), rgb(8 8 9 / 88%));
+}
+
+.dnd4e-health-display__panel.is-leader .dnd4e-health-display__role {
+	color: #f1ce70;
+	opacity: 1;
+}
+
+.dnd4e-health-display__panel.is-leader .dnd4e-health-display__bar {
+	border-color: #caa03f;
+}
+
+.dnd4e-health-display__panel.is-minion {
+	opacity: 0.78;
+}
+
+.dnd4e-health-display__panel.is-minion .dnd4e-health-display__heading {
+	padding-block: 0.28rem 0.38rem;
+	border-color: rgb(116 112 108 / 65%);
+	background: rgb(8 8 9 / 72%);
+}
+
+.dnd4e-health-display__panel.is-minion .dnd4e-health-display__name {
+	font-size: 1.25rem;
+	font-weight: 600;
+}
+
+.dnd4e-health-display__panel.is-minion .dnd4e-health-display__role {
+	color: #aaa39b;
+}
+
+.dnd4e-health-display__panel.is-minion .dnd4e-health-display__bar {
+	grid-template-columns: 1fr;
+	width: 32%;
+	height: 0.78rem;
+	padding: 0.13rem;
+	border-color: #6f6963;
 }
 
 .dnd4e-health-display__bar {
