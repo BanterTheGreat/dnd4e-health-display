@@ -56,7 +56,7 @@
 				<section class="dnd4e-info-actor-display__group">
 					<h2>{{name}} <small>{{powers.length}}</small></h2>
 					{{#each powers}}
-						<div class="dnd4e-info-actor-display__power {{usageClass}}{{#if depleted}} is-depleted{{/if}}" data-action="power" data-item-id="{{id}}" role="button" tabindex="0">
+						<div class="dnd4e-info-actor-display__power {{usageClass}}{{#if depleted}} is-depleted{{/if}}" data-action="power" data-item-id="{{id}}" data-item-tooltip data-tooltip-direction="RIGHT" data-power-usage="{{usageClass}}" role="button" tabindex="0">
 							<i class="{{icon}}" aria-hidden="true"></i>
 							<strong>{{name}}</strong>
 							{{#if showUses}}<small>{{uses}}</small>{{/if}}
@@ -79,7 +79,7 @@
 			{{#each featureCategories}}
 				<section class="dnd4e-info-actor-display__group">
 					<h2>{{name}}</h2>
-					{{#each features}}<button type="button" class="dnd4e-info-actor-display__feature" data-action="feature" data-item-id="{{id}}"><i class="fa-solid fa-book"></i><strong>{{name}}</strong></button>{{/each}}
+					{{#each features}}<button type="button" class="dnd4e-info-actor-display__feature" data-action="feature" data-item-id="{{id}}" data-item-tooltip data-tooltip-direction="RIGHT"><i class="fa-solid fa-book"></i><strong>{{name}}</strong></button>{{/each}}
 				</section>
 			{{/each}}
 		{{/if}}
@@ -89,12 +89,12 @@
 				<section class="dnd4e-info-actor-display__group">
 					<h2>{{name}}</h2>
 					{{#each items}}
-						<div class="dnd4e-info-actor-display__item">
+						<div class="dnd4e-info-actor-display__item" data-item-id="{{id}}" data-item-tooltip data-tooltip-direction="RIGHT">
 							<button type="button" data-action="item" data-item-id="{{id}}">
 								<i class="fa-solid fa-treasure-chest"></i>
 								<span class="dnd4e-info-actor-display__item-copy">
 									<strong>{{name}}</strong>
-									{{#if weaponSummary}}<small title="{{weaponSummary}}">{{weaponSummary}}</small>{{/if}}
+									{{#if weaponSummary}}<small>{{weaponSummary}}</small>{{/if}}
 								</span>
 							</button>
 							{{#if canEquip}}<button type="button" class="dnd4e-info-actor-display__equip {{#if equipped}}is-equipped{{/if}}" data-action="toggleEquip" data-item-id="{{id}}">{{#if equipped}}Equipped{{else}}Equip{{/if}}</button>{{/if}}

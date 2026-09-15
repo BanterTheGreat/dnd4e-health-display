@@ -1,4 +1,5 @@
 import { getActorDisplayData } from "./actor-display-data.js";
+import { initializeActorDisplayTooltips } from "./actor-display-tooltips.js";
 
 const MODULE_ID = "dnd4e-health-display";
 const SHOW_SETTING = "showActorDisplay";
@@ -200,6 +201,7 @@ class ActorDisplay extends HandlebarsApplicationMixin(ApplicationV2) {
 		super._onRender(context, options);
 		this.element.querySelector(".dnd4e-info-actor-display__workspace")?.scrollTo(0, this.savedScrollTop);
 		this.initializeResourceInputs();
+		initializeActorDisplayTooltips(this.element, this.actor);
 		this.initializeDrag();
 		this.restorePosition();
 	}
