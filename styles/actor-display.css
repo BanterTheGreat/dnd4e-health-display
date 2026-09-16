@@ -36,7 +36,7 @@
 	border-bottom: 1px solid rgb(153 116 86 / 35%);
 	background: #211c1a;
 	color: #ccbca9;
-	font-family: var(--font-serif, serif);
+	font-family: var(--font-primary, "Signika", sans-serif);
 	font-style: italic;
 }
 
@@ -209,7 +209,7 @@
 
 .dnd4e-info-actor-display__identity small {
 	color: #a98c70;
-	font-family: var(--font-serif, serif);
+	font-family: var(--font-primary, "Signika", sans-serif);
 	font-style: italic;
 }
 
@@ -724,7 +724,7 @@
 	border-top: 1px solid rgb(0 0 0 / 26%);
 	background: rgb(0 0 0 / 16%);
 	color: #d3ddcd;
-	font-family: var(--font-serif, serif);
+	font-family: var(--font-primary, "Signika", sans-serif);
 	font-size: 0.72rem;
 	font-style: italic;
 	line-height: 1.2;
@@ -753,7 +753,7 @@
 	margin: 0;
 	padding: 0.32rem 0.5rem 0.2rem;
 	color: #cbd7c7;
-	font-family: var(--font-serif, serif);
+	font-family: var(--font-primary, "Signika", sans-serif);
 	font-style: italic;
 }
 
@@ -951,7 +951,7 @@
 
 .dnd4e-info-actor-display__feature-copy small {
 	color: #b9ab9e;
-	font-family: var(--font-serif, serif);
+	font-family: var(--font-primary, "Signika", sans-serif);
 	font-size: 0.7rem;
 	font-weight: 400;
 	line-height: 1.25;

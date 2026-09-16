@@ -1,6 +1,8 @@
 # Changelog
 
-## Unreleased
+## 2.0
+
+Streamlined the actor display typography to Signika for interface and supporting text, reserving Modesto Condensed for character identity and headline resource values while retaining italic flavour copy.
 
 Added a client-persisted status-only mode for the actor display. Collapse it from the new control at the bottom of the display to hide tabs, detail content, and quick actions while retaining the identity, hit points, player-character healing surges, defenses, and initiative; use the compact control to restore the full display. NPCs omit the unused healing-surge counter and meter. Refreshing an expended power now privately notifies every online GM with the character and ability involved.
 
