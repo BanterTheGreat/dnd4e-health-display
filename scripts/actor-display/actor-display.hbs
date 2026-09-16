@@ -77,8 +77,14 @@
 		{{/if}}
 
 		{{#if isPowers}}
+			{{#if isPlayerCharacter}}
+				<div class="dnd4e-info-actor-display__power-search">
+					<i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+					<input type="search" value="{{powerSearchQuery}}" placeholder="Search powers" aria-label="Search powers" data-power-search>
+				</div>
+			{{/if}}
 			{{#each powerCategories}}
-				<section class="dnd4e-info-actor-display__group">
+				<section class="dnd4e-info-actor-display__group" data-power-category>
 					<h2>
 						{{name}} <small>{{powers.length}}</small>
 						{{#if @first}}{{#if @root.isPlayerCharacter}}
@@ -88,7 +94,7 @@
 						{{/if}}{{/if}}
 					</h2>
 					{{#each powers}}
-						<div class="dnd4e-info-actor-display__power {{usageClass}} {{#if inlineDetails}}has-inline-details{{/if}}{{#if depleted}} is-depleted{{/if}}" data-action="power" data-item-id="{{id}}" {{#unless inlineDetails}}data-item-tooltip data-tooltip-direction="RIGHT" data-power-usage="{{usageClass}}"{{/unless}} role="button" tabindex="0">
+						<div class="dnd4e-info-actor-display__power {{usageClass}} {{#if inlineDetails}}has-inline-details{{/if}}{{#if depleted}} is-depleted{{/if}}" data-action="power" data-item-id="{{id}}" data-power-name="{{name}}" {{#unless inlineDetails}}data-item-tooltip data-tooltip-direction="RIGHT" data-power-usage="{{usageClass}}"{{/unless}} role="button" tabindex="0">
 							<div class="dnd4e-info-actor-display__power-header">
 								<i class="{{icon}}" aria-hidden="true"></i>
 								<strong>{{name}}</strong>
@@ -101,6 +107,7 @@
 					{{/each}}
 				</section>
 			{{/each}}
+			{{#if isPlayerCharacter}}<p class="dnd4e-info-actor-display__power-search-empty" data-power-search-empty hidden>No matching powers.</p>{{/if}}
 		{{/if}}
 
 		{{#if isSkills}}

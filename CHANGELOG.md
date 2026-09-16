@@ -2,7 +2,15 @@
 
 ## Unreleased
 
+Added a live, case-insensitive search field to player-character Powers tabs, filtering cards and their empty categories by power name as the user types.
+
 Added a client-persisted Powers-tab control for player characters which hides or restores their short power flavour text.
+
+Added an independent mark-display overlay that uses DnD4e's mark ownership data to draw directional marker-to-marked token connections, including plain and numbered mark statuses, with a client setting to show or hide them.
+
+Refined mark connectors with a subtle dark under-stroke for map contrast, rounded slimmer gold lines, outlined barbed spearheads that remain clear of marked token artwork, and small offsets between a marker's concurrent connections. Visible arrowheads now animate with a subtle pulse.
+
+Mark connections now appear only while either linked token is hovered or controlled.
 
 ## 2.0
 

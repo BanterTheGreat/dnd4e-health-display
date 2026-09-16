@@ -654,6 +654,48 @@
 	scrollbar-color: #79262d #191617;
 }
 
+.dnd4e-info-actor-display__power-search {
+	display: flex;
+	align-items: center;
+	gap: 0.45rem;
+	margin-top: 0.7rem;
+	padding: 0.3rem 0.5rem;
+	border: 1px solid rgb(153 116 86 / 40%);
+	border-radius: 0.3rem;
+	background: #211e1e;
+	color: #c89550;
+}
+
+.dnd4e-info-actor-display__power-search:focus-within {
+	border-color: #e4b96f;
+	box-shadow: inset 0 0 0 1px rgb(228 185 111 / 22%);
+}
+
+.dnd4e-info-actor-display__power-search input {
+	width: 100%;
+	min-width: 0;
+	padding: 0;
+	border: 0;
+	outline: 0;
+	background: transparent;
+	color: #f0ddc2;
+	font: inherit;
+	font-size: 0.74rem;
+}
+
+.dnd4e-info-actor-display__power-search input::placeholder {
+	color: #9b856f;
+	opacity: 1;
+}
+
+.dnd4e-info-actor-display__power-search-empty {
+	margin: 1rem 0;
+	color: #b9a28a;
+	font-size: 0.76rem;
+	font-style: italic;
+	text-align: center;
+}
+
 .dnd4e-info-actor-display__group h2 {
 	display: flex;
 	align-items: center;

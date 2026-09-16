@@ -192,6 +192,7 @@ class ActorDisplay extends HandlebarsApplicationMixin(ApplicationV2) {
 		this.isPowerFlavourHidden = game.settings.get(MODULE_ID, POWER_FLAVOUR_HIDDEN_SETTING);
 		this.isDetached = false;
 		this.savedScrollTop = 0;
+		this.powerSearchQuery = "";
 	}
 
 	static DEFAULT_OPTIONS = {
@@ -241,6 +242,7 @@ class ActorDisplay extends HandlebarsApplicationMixin(ApplicationV2) {
 		if (actorChanged) {
 			this.activeTab = getDefaultTab(token);
 			this.savedScrollTop = 0;
+			this.powerSearchQuery = "";
 		}
 		this.render();
 	}
@@ -253,6 +255,7 @@ class ActorDisplay extends HandlebarsApplicationMixin(ApplicationV2) {
 			isCollapsed: this.isCollapsed,
 			isPowerFlavourHidden: this.isPowerFlavourHidden,
 			isDetached: this.isDetached,
+			powerSearchQuery: this.powerSearchQuery,
 		});
 	}
 
@@ -266,6 +269,7 @@ class ActorDisplay extends HandlebarsApplicationMixin(ApplicationV2) {
 		super._onRender(context, options);
 		this.element.querySelector(".dnd4e-info-actor-display__workspace")?.scrollTo(0, this.savedScrollTop);
 		this.initializeResourceInputs();
+		this.initializePowerSearch();
 		initializeActorDisplayTooltips(this.element, this.actor);
 		this.initializeDrag();
 		this.restorePosition();
@@ -375,6 +379,38 @@ class ActorDisplay extends HandlebarsApplicationMixin(ApplicationV2) {
 	/** Toggle between the full display and the status-only display. */
 	async onToggleCollapse() {
 		await game.settings.set(MODULE_ID, COLLAPSED_SETTING, !this.isCollapsed);
+	}
+
+	/** Bind the live power-name filter for player-character displays. */
+	initializePowerSearch() {
+		const input = this.element.querySelector("[data-power-search]");
+		if (!input) {
+			return;
+		}
+
+		const filter = () => {
+			this.powerSearchQuery = input.value;
+			const query = this.powerSearchQuery.trim().toLocaleLowerCase();
+			let matchingPowers = 0;
+
+			for (const power of this.element.querySelectorAll("[data-power-name]")) {
+				const matches = !query || power.dataset.powerName.toLocaleLowerCase().includes(query);
+				power.hidden = !matches;
+				matchingPowers += Number(matches);
+			}
+
+			for (const category of this.element.querySelectorAll("[data-power-category]")) {
+				category.hidden = !category.querySelector("[data-power-name]:not([hidden])");
+			}
+
+			const emptyState = this.element.querySelector("[data-power-search-empty]");
+			if (emptyState) {
+				emptyState.hidden = matchingPowers !== 0;
+			}
+		};
+
+		input.addEventListener("input", filter);
+		filter();
 	}
 
 	/**

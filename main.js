@@ -12,15 +12,21 @@ import {
 	registerTeamDisplay,
 	registerTeamDisplaySettings,
 } from "./scripts/team-display/team-display.js";
+import {
+	registerMarkDisplay,
+	registerMarkDisplaySettings,
+} from "./scripts/mark-display/mark-display.js";
 
 Hooks.once("init", () => {
 	registerHealthDisplaySettings();
 	registerActorDisplaySettings();
 	registerTeamDisplaySettings();
+	registerMarkDisplaySettings();
 });
 
 Hooks.once("ready", () => {
 	registerHealthDisplay();
 	registerActorDisplay();
 	registerTeamDisplay();
+	registerMarkDisplay();
 });
