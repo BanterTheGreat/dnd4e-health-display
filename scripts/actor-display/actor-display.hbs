@@ -79,7 +79,14 @@
 		{{#if isPowers}}
 			{{#each powerCategories}}
 				<section class="dnd4e-info-actor-display__group">
-					<h2>{{name}} <small>{{powers.length}}</small></h2>
+					<h2>
+						{{name}} <small>{{powers.length}}</small>
+						{{#if @first}}{{#if @root.isPlayerCharacter}}
+							<button type="button" class="dnd4e-info-actor-display__power-flavour-toggle" data-action="togglePowerFlavour" aria-pressed="{{#if @root.isPowerFlavourHidden}}false{{else}}true{{/if}}" aria-label="{{#if @root.isPowerFlavourHidden}}Show power flavour text{{else}}Hide power flavour text{{/if}}" title="{{#if @root.isPowerFlavourHidden}}Show power flavour text{{else}}Hide power flavour text{{/if}}">
+								<i class="fa-solid {{#if @root.isPowerFlavourHidden}}fa-eye-slash{{else}}fa-eye{{/if}}" aria-hidden="true"></i>
+							</button>
+						{{/if}}{{/if}}
+					</h2>
 					{{#each powers}}
 						<div class="dnd4e-info-actor-display__power {{usageClass}} {{#if inlineDetails}}has-inline-details{{/if}}{{#if depleted}} is-depleted{{/if}}" data-action="power" data-item-id="{{id}}" {{#unless inlineDetails}}data-item-tooltip data-tooltip-direction="RIGHT" data-power-usage="{{usageClass}}"{{/unless}} role="button" tabindex="0">
 							<div class="dnd4e-info-actor-display__power-header">
@@ -88,7 +95,7 @@
 								{{#if showUses}}<small>{{uses}}</small>{{/if}}
 								{{#if depleted}}<button type="button" data-action="refreshPower" data-item-id="{{id}}" title="Refresh power"><i class="fa-solid fa-rotate-right"></i></button>{{/if}}
 							</div>
-							{{#if flavour}}{{#unless depleted}}<p class="dnd4e-info-actor-display__power-flavour">{{flavour}}</p>{{/unless}}{{/if}}
+							{{#unless @root.isPowerFlavourHidden}}{{#if flavour}}{{#unless depleted}}<p class="dnd4e-info-actor-display__power-flavour">{{flavour}}</p>{{/unless}}{{/if}}{{/unless}}
 							{{#if inlineDetails}}<div class="dnd4e-info-actor-display__power-details {{inlineDetailsClass}}">{{{inlineDetails}}}</div>{{/if}}
 						</div>
 					{{/each}}

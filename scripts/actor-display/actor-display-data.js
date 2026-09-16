@@ -60,6 +60,7 @@ export async function getActorDisplayData(token, activeTab) {
 		stats: getStats(actor),
 		tabs: getTabs(actor, activeTab),
 		activeTab,
+		isPlayerCharacter: actor.type === "Player Character",
 		isPowers: activeTab === "powers" || (isNpc && activeTab === "features"),
 		isSkills: activeTab === "skills",
 		isFeatures: !isNpc && activeTab === "features",

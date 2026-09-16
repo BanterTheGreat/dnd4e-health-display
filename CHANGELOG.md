@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+Added a client-persisted Powers-tab control for player characters which hides or restores their short power flavour text.
+
 ## 2.0
 
 Streamlined the actor display typography to Signika for interface and supporting text, reserving Modesto Condensed for character identity and headline resource values while retaining italic flavour copy.

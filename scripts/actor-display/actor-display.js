@@ -5,6 +5,7 @@ const MODULE_ID = "dnd4e-health-display";
 const SHOW_SETTING = "showActorDisplay";
 const POSITION_SETTING = "actorDisplayPosition";
 const COLLAPSED_SETTING = "actorDisplayCollapsed";
+const POWER_FLAVOUR_HIDDEN_SETTING = "actorDisplayPowerFlavourHidden";
 const TEMPLATE_PATH = `modules/${MODULE_ID}/scripts/actor-display/actor-display.hbs`;
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
@@ -47,6 +48,16 @@ export function registerActorDisplaySettings() {
 		type: Boolean,
 		default: false,
 		onChange: (collapsed) => ui.Dnd4eActorDisplay?.setCollapsed(collapsed),
+	});
+
+	game.settings.register(MODULE_ID, POWER_FLAVOUR_HIDDEN_SETTING, {
+		name: "Hide player-character power flavour",
+		hint: "Hide the short flavour text beneath player-character powers in the actor display.",
+		scope: "client",
+		config: false,
+		type: Boolean,
+		default: false,
+		onChange: (hidden) => ui.Dnd4eActorDisplay?.setPowerFlavourHidden(hidden),
 	});
 }
 
@@ -178,6 +189,7 @@ class ActorDisplay extends HandlebarsApplicationMixin(ApplicationV2) {
 		this.token = token;
 		this.activeTab = getDefaultTab(token);
 		this.isCollapsed = game.settings.get(MODULE_ID, COLLAPSED_SETTING);
+		this.isPowerFlavourHidden = game.settings.get(MODULE_ID, POWER_FLAVOUR_HIDDEN_SETTING);
 		this.isDetached = false;
 		this.savedScrollTop = 0;
 	}
@@ -198,6 +210,7 @@ class ActorDisplay extends HandlebarsApplicationMixin(ApplicationV2) {
 			dismiss: ActorDisplay.prototype.onDismiss,
 			toggleDetach: ActorDisplay.prototype.onToggleDetach,
 			toggleCollapse: ActorDisplay.prototype.onToggleCollapse,
+			togglePowerFlavour: ActorDisplay.prototype.onTogglePowerFlavour,
 			showSection: ActorDisplay.prototype.onShowSection,
 			power: { handler: ActorDisplay.prototype.onPower, buttons: [0, 2] },
 			refreshPower: ActorDisplay.prototype.onRefreshPower,
@@ -238,6 +251,7 @@ class ActorDisplay extends HandlebarsApplicationMixin(ApplicationV2) {
 		return foundry.utils.mergeObject(context, {
 			...await getActorDisplayData(this.token, this.activeTab),
 			isCollapsed: this.isCollapsed,
+			isPowerFlavourHidden: this.isPowerFlavourHidden,
 			isDetached: this.isDetached,
 		});
 	}
@@ -361,6 +375,27 @@ class ActorDisplay extends HandlebarsApplicationMixin(ApplicationV2) {
 	/** Toggle between the full display and the status-only display. */
 	async onToggleCollapse() {
 		await game.settings.set(MODULE_ID, COLLAPSED_SETTING, !this.isCollapsed);
+	}
+
+	/**
+	 * Set whether player-character power flavour text is hidden.
+	 *
+	 * @param {boolean} hidden Whether to hide player-character power flavour text.
+	 */
+	setPowerFlavourHidden(hidden) {
+		if (this.isPowerFlavourHidden === hidden) {
+			return;
+		}
+
+		this.isPowerFlavourHidden = hidden;
+		this.render();
+	}
+
+	/**
+	 * Toggle the player-character power flavour text.
+	 */
+	async onTogglePowerFlavour() {
+		await game.settings.set(MODULE_ID, POWER_FLAVOUR_HIDDEN_SETTING, !this.isPowerFlavourHidden);
 	}
 
 	/** @param {PointerEvent} event The action event. @param {HTMLElement} target The action target. */
