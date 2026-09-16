@@ -25,9 +25,10 @@ const FEATURE_CATEGORY_RULES = [
  *
  * @param {Token} token The displayed canvas token.
  * @param {string} activeTab The currently selected inventory tab.
+ * @param {Set<string>} expandedPowerIds Player-character powers with their rules details expanded.
  * @returns {Promise<object>}
  */
-export async function getActorDisplayData(token, activeTab) {
+export async function getActorDisplayData(token, activeTab, expandedPowerIds = new Set()) {
 	const actor = token.actor;
 	const isNpc = actor.type === "NPC";
 	const hp = actor.system?.attributes?.hp ?? {};
@@ -66,7 +67,7 @@ export async function getActorDisplayData(token, activeTab) {
 		isFeatures: !isNpc && activeTab === "features",
 		isNpcFeatures: isNpc && activeTab === "features",
 		isItems: activeTab === "items",
-		powerCategories: await getPowerCategories(actor),
+		powerCategories: await getPowerCategories(actor, expandedPowerIds),
 		skills: getSkills(actor),
 		featureCategories: getFeatureCategories(actor),
 		traitCategories: getTraitCategories(actor),
@@ -181,9 +182,10 @@ function getTabs(actor, activeTab) {
  * Group and map powers for the display.
  *
  * @param {Actor} actor The displayed actor.
+ * @param {Set<string>} expandedPowerIds Player-character powers with their rules details expanded.
  * @returns {Array<object>}
  */
-async function getPowerCategories(actor) {
+async function getPowerCategories(actor, expandedPowerIds) {
 	const powers = Array.from(actor.items ?? []).filter((item) => item.type === "power");
 	const knownActions = POWER_CATEGORY_RULES.flatMap(([_name, actions]) => actions);
 
@@ -194,7 +196,7 @@ async function getPowerCategories(actor) {
 				? actions.includes(power.system?.actionType)
 				: !knownActions.includes(power.system?.actionType))
 			.sort((left, right) => getPowerOrder(left) - getPowerOrder(right) || left.name.localeCompare(right.name))
-			.map((power) => mapPower(power, actor)),
+			.map((power) => mapPower(power, actor, expandedPowerIds)),
 	})).filter((category) => category.powers.length);
 
 	return Promise.all(categories.map(async (category) => ({
@@ -203,12 +205,13 @@ async function getPowerCategories(actor) {
 	})));
 }
 
-/** @param {Item} power The power to map. @param {Actor} actor The power's actor. */
-async function mapPower(power, actor) {
+/** @param {Item} power The power to map. @param {Actor} actor The power's actor. @param {Set<string>} expandedPowerIds Expanded player-character power ids. */
+async function mapPower(power, actor, expandedPowerIds) {
 	const uses = power.system?.uses ?? {};
 	const maximum = Number(uses.max) || 0;
 	const value = Number(uses.value) || 0;
-	const inlineDetails = actor.type === "NPC"
+	const isExpanded = expandedPowerIds.has(power.id);
+	const inlineDetails = actor.type === "NPC" || isExpanded
 		? await generateInlinePowerDetails(actor, power)
 		: { html: "", cssClass: "" };
 	return {
@@ -220,6 +223,10 @@ async function mapPower(power, actor) {
 		uses: `${value} / ${maximum}`,
 		depleted: maximum > 0 && value <= 0,
 		flavour: actor.type === "Player Character" ? getPowerFlavour(power) : "",
+		isNpcPower: actor.type === "NPC",
+		isExpandable: actor.type === "Player Character",
+		isExpanded,
+		canRollDamage: power.hasDamage,
 		inlineDetails: inlineDetails.html,
 		inlineDetailsClass: inlineDetails.cssClass,
 	};

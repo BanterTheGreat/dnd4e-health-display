@@ -193,6 +193,7 @@ class ActorDisplay extends HandlebarsApplicationMixin(ApplicationV2) {
 		this.isDetached = false;
 		this.savedScrollTop = 0;
 		this.powerSearchQuery = "";
+		this.expandedPowerIds = new Set();
 	}
 
 	static DEFAULT_OPTIONS = {
@@ -214,7 +215,10 @@ class ActorDisplay extends HandlebarsApplicationMixin(ApplicationV2) {
 			togglePowerFlavour: ActorDisplay.prototype.onTogglePowerFlavour,
 			showSection: ActorDisplay.prototype.onShowSection,
 			power: { handler: ActorDisplay.prototype.onPower, buttons: [0, 2] },
+			chatPower: ActorDisplay.prototype.onChatPower,
+			rollPowerDamage: ActorDisplay.prototype.onRollPowerDamage,
 			refreshPower: ActorDisplay.prototype.onRefreshPower,
+			togglePowerDetails: ActorDisplay.prototype.onTogglePowerDetails,
 			skill: ActorDisplay.prototype.onSkill,
 			feature: { handler: ActorDisplay.prototype.onFeature, buttons: [0, 2] },
 			item: { handler: ActorDisplay.prototype.onItem, buttons: [0, 2] },
@@ -243,6 +247,7 @@ class ActorDisplay extends HandlebarsApplicationMixin(ApplicationV2) {
 			this.activeTab = getDefaultTab(token);
 			this.savedScrollTop = 0;
 			this.powerSearchQuery = "";
+			this.expandedPowerIds.clear();
 		}
 		this.render();
 	}
@@ -251,7 +256,7 @@ class ActorDisplay extends HandlebarsApplicationMixin(ApplicationV2) {
 	async _prepareContext(options) {
 		const context = await super._prepareContext(options);
 		return foundry.utils.mergeObject(context, {
-			...await getActorDisplayData(this.token, this.activeTab),
+			...await getActorDisplayData(this.token, this.activeTab, this.expandedPowerIds),
 			isCollapsed: this.isCollapsed,
 			isPowerFlavourHidden: this.isPowerFlavourHidden,
 			isDetached: this.isDetached,
@@ -449,8 +454,58 @@ class ActorDisplay extends HandlebarsApplicationMixin(ApplicationV2) {
 			return;
 		}
 		if (power) {
+			if (this.actor.type === "NPC" && power.hasAttack) {
+				await this.consumePowerUse(power);
+				await power.rollAttack();
+				return;
+			}
 			await this.actor.usePower(power);
 		}
+	}
+
+	/**
+	 * Consume an NPC power's limited use before its direct attack roll.
+	 *
+	 * This mirrors the DnD4e actor's normal usePower workflow, which the
+	 * direct rollAttack call intentionally bypasses to avoid posting a chat card.
+	 *
+	 * @param {Item} power The NPC power being used.
+	 */
+	async consumePowerUse(power) {
+		const uses = power.system?.uses;
+		if (!uses?.per) {
+			return;
+		}
+
+		const currentUses = Number.parseInt(uses.value || 0, 10) || 0;
+		if (currentUses <= 0) {
+			ui.notifications.warn(game.i18n.format("DND4E.ItemNoUses", { name: power.name }));
+		}
+
+		if (game.combat || !["round", "turn"].includes(uses.per)) {
+			await power.update({ "system.uses.value": Math.max(currentUses - 1, 0) });
+		}
+	}
+
+	/** Send an NPC power's standard item card to chat. */
+	onChatPower(event, target) {
+		return this.actor.items.get(target.dataset.itemId)?.roll();
+	}
+
+	/** Roll an NPC power's damage through the DnD4e damage workflow. */
+	onRollPowerDamage(event, target) {
+		return this.actor.items.get(target.dataset.itemId)?.rollDamage({ event });
+	}
+
+	/** Toggle the full rules details for one player-character power. */
+	onTogglePowerDetails(event, target) {
+		const powerId = target.dataset.itemId;
+		if (this.expandedPowerIds.has(powerId)) {
+			this.expandedPowerIds.delete(powerId);
+		} else {
+			this.expandedPowerIds.add(powerId);
+		}
+		this.render();
 	}
 
 	/** @param {PointerEvent} event The action event. @param {HTMLElement} target The action target. */
@@ -472,6 +527,9 @@ class ActorDisplay extends HandlebarsApplicationMixin(ApplicationV2) {
 		const feature = this.actor.items.get(target.dataset.itemId);
 		if (event.button === 2) {
 			return feature?.sheet.render(true);
+		}
+		if (feature?.hasAttack) {
+			return feature.rollAttack();
 		}
 		return feature?.roll();
 	}

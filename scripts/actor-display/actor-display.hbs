@@ -96,10 +96,12 @@
 					{{#each powers}}
 						<div class="dnd4e-info-actor-display__power {{usageClass}} {{#if inlineDetails}}has-inline-details{{/if}}{{#if depleted}} is-depleted{{/if}}" data-action="power" data-item-id="{{id}}" data-power-name="{{name}}" {{#unless inlineDetails}}data-item-tooltip data-tooltip-direction="RIGHT" data-power-usage="{{usageClass}}"{{/unless}} role="button" tabindex="0">
 							<div class="dnd4e-info-actor-display__power-header">
-								<i class="{{icon}}" aria-hidden="true"></i>
-								<strong>{{name}}</strong>
-								{{#if showUses}}<small>{{uses}}</small>{{/if}}
-								{{#if depleted}}<button type="button" data-action="refreshPower" data-item-id="{{id}}" title="Refresh power"><i class="fa-solid fa-rotate-right"></i></button>{{/if}}
+							<i class="{{icon}}" aria-hidden="true"></i>
+							<strong>{{name}}</strong>
+							{{#if showUses}}<small>{{uses}}</small>{{/if}}
+							{{#if isExpandable}}<button type="button" class="dnd4e-info-actor-display__power-details-toggle" data-action="togglePowerDetails" data-item-id="{{id}}" aria-expanded="{{#if isExpanded}}true{{else}}false{{/if}}" aria-label="{{#if isExpanded}}Hide {{name}} details{{else}}Show {{name}} details{{/if}}" title="{{#if isExpanded}}Hide details{{else}}Show details{{/if}}"><i class="fa-solid {{#if isExpanded}}fa-chevron-up{{else}}fa-chevron-down{{/if}}" aria-hidden="true"></i></button>{{/if}}
+							{{#if isNpcPower}}<span class="dnd4e-info-actor-display__npc-power-actions" role="group" aria-label="{{name}} actions"><button type="button" data-action="chatPower" data-item-id="{{id}}" aria-label="Send {{name}} to chat" title="Send to chat"><i class="fa-solid fa-comment" aria-hidden="true"></i></button>{{#if canRollDamage}}<button type="button" data-action="rollPowerDamage" data-item-id="{{id}}" aria-label="Roll {{name}} damage" title="Roll damage"><i class="fa-solid fa-burst" aria-hidden="true"></i></button>{{/if}}</span>{{/if}}
+							{{#if depleted}}<button type="button" data-action="refreshPower" data-item-id="{{id}}" title="Refresh power"><i class="fa-solid fa-rotate-right"></i></button>{{/if}}
 							</div>
 							{{#unless @root.isPowerFlavourHidden}}{{#if flavour}}{{#unless depleted}}<p class="dnd4e-info-actor-display__power-flavour">{{flavour}}</p>{{/unless}}{{/if}}{{/unless}}
 							{{#if inlineDetails}}<div class="dnd4e-info-actor-display__power-details {{inlineDetailsClass}}">{{{inlineDetails}}}</div>{{/if}}

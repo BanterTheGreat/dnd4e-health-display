@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+NPC attacking powers and feature abilities now open the DnD4e attack-roll dialog from the Actor display instead of posting their item cards directly to chat, consuming limited power uses as normal. NPC powers now also provide separate controls to send their cards to chat or roll their damage, while player-character powers can expand individually to show the same complete rules details used for NPC powers.
+
 Added a live, case-insensitive search field to player-character Powers tabs, filtering cards and their empty categories by power name as the user types.
 
 Added a client-persisted Powers-tab control for player characters which hides or restores their short power flavour text.
