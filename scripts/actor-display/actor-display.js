@@ -4,6 +4,7 @@ import { initializeActorDisplayTooltips } from "./actor-display-tooltips.js";
 const MODULE_ID = "dnd4e-health-display";
 const SHOW_SETTING = "showActorDisplay";
 const POSITION_SETTING = "actorDisplayPosition";
+const COLLAPSED_SETTING = "actorDisplayCollapsed";
 const TEMPLATE_PATH = `modules/${MODULE_ID}/scripts/actor-display/actor-display.hbs`;
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
@@ -36,6 +37,16 @@ export function registerActorDisplaySettings() {
 		config: false,
 		type: Object,
 		default: { top: null, left: null },
+	});
+
+	game.settings.register(MODULE_ID, COLLAPSED_SETTING, {
+		name: "Collapse actor display",
+		hint: "Show only the actor's identity and current status until the display is expanded.",
+		scope: "client",
+		config: false,
+		type: Boolean,
+		default: false,
+		onChange: (collapsed) => ui.Dnd4eActorDisplay?.setCollapsed(collapsed),
 	});
 }
 
@@ -77,6 +88,10 @@ function renderSelectedActor() {
 	}
 
 	if (isActorDisplayDismissed) {
+		return;
+	}
+
+	if (ui.Dnd4eActorDisplay?.isDetached) {
 		return;
 	}
 
@@ -162,6 +177,8 @@ class ActorDisplay extends HandlebarsApplicationMixin(ApplicationV2) {
 		super(options);
 		this.token = token;
 		this.activeTab = getDefaultTab(token);
+		this.isCollapsed = game.settings.get(MODULE_ID, COLLAPSED_SETTING);
+		this.isDetached = false;
 		this.savedScrollTop = 0;
 	}
 
@@ -179,6 +196,8 @@ class ActorDisplay extends HandlebarsApplicationMixin(ApplicationV2) {
 		window: { frame: false },
 		actions: {
 			dismiss: ActorDisplay.prototype.onDismiss,
+			toggleDetach: ActorDisplay.prototype.onToggleDetach,
+			toggleCollapse: ActorDisplay.prototype.onToggleCollapse,
 			showSection: ActorDisplay.prototype.onShowSection,
 			power: { handler: ActorDisplay.prototype.onPower, buttons: [0, 2] },
 			refreshPower: ActorDisplay.prototype.onRefreshPower,
@@ -200,6 +219,10 @@ class ActorDisplay extends HandlebarsApplicationMixin(ApplicationV2) {
 
 	/** @param {Token} token The new displayed token. */
 	setToken(token) {
+		if (this.isDetached) {
+			return;
+		}
+
 		const actorChanged = this.actor?.id !== token.actor?.id;
 		this.token = token;
 		if (actorChanged) {
@@ -212,7 +235,11 @@ class ActorDisplay extends HandlebarsApplicationMixin(ApplicationV2) {
 	/** @returns {object} */
 	async _prepareContext(options) {
 		const context = await super._prepareContext(options);
-		return foundry.utils.mergeObject(context, await getActorDisplayData(this.token, this.activeTab));
+		return foundry.utils.mergeObject(context, {
+			...await getActorDisplayData(this.token, this.activeTab),
+			isCollapsed: this.isCollapsed,
+			isDetached: this.isDetached,
+		});
 	}
 
 	/** Place the frameless display directly in the document body. */
@@ -310,6 +337,32 @@ class ActorDisplay extends HandlebarsApplicationMixin(ApplicationV2) {
 		dismissActorDisplay();
 	}
 
+	/** Toggle whether the display follows the controlled token. */
+	onToggleDetach() {
+		this.isDetached = !this.isDetached;
+		if (this.isDetached) {
+			this.render();
+			return;
+		}
+
+		renderSelectedActor();
+	}
+
+	/** @param {boolean} collapsed Whether to show the status-only display. */
+	setCollapsed(collapsed) {
+		if (this.isCollapsed === collapsed) {
+			return;
+		}
+
+		this.isCollapsed = collapsed;
+		this.render();
+	}
+
+	/** Toggle between the full display and the status-only display. */
+	async onToggleCollapse() {
+		await game.settings.set(MODULE_ID, COLLAPSED_SETTING, !this.isCollapsed);
+	}
+
 	/** @param {PointerEvent} event The action event. @param {HTMLElement} target The action target. */
 	onShowSection(event, target) {
 		this.activeTab = target.dataset.displayTab;
@@ -334,6 +387,7 @@ class ActorDisplay extends HandlebarsApplicationMixin(ApplicationV2) {
 		const power = this.actor.items.get(target.dataset.itemId);
 		if (power) {
 			await power.update({ "system.uses.value": power.system?.uses?.max });
+			await whisperPowerRefresh(this.actor, power);
 		}
 	}
 
@@ -384,6 +438,29 @@ class ActorDisplay extends HandlebarsApplicationMixin(ApplicationV2) {
 			default: return undefined;
 		}
 	}
+}
+
+/**
+ * Notify the currently online GMs that an actor-display power was refreshed.
+ *
+ * @param {Actor} actor The actor which owns the refreshed power.
+ * @param {Item} power The power whose uses were restored.
+ */
+async function whisperPowerRefresh(actor, power) {
+	const recipients = game.users
+		.filter((user) => user.active && user.isGM)
+		.map((user) => user.id);
+	if (!recipients.length) {
+		return;
+	}
+
+	const userName = Handlebars.escapeExpression(game.user.name);
+	const actorName = Handlebars.escapeExpression(actor.name);
+	const powerName = Handlebars.escapeExpression(power.name);
+	await ChatMessage.create({
+		content: `<p><strong>${userName}</strong> refreshed <strong>${powerName}</strong> for <strong>${actorName}</strong>.</p>`,
+		whisper: recipients,
+	});
 }
 
 /** @param {Token} token The token whose actor determines the initial tab. */

@@ -51,6 +51,7 @@ export async function getActorDisplayData(token, activeTab) {
 			dialSegmentAngle: actor.type === "Player Character" ? 60 : 90,
 		},
 		tempHp: Number(actor.system?.attributes?.temphp?.value) || 0,
+		hasSurges: !isNpc,
 		surges: {
 			value: surgeValue,
 			maximum: surgeMaximum,

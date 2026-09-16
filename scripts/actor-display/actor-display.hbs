@@ -1,4 +1,4 @@
-<div class="dnd4e-info-actor-display__panel">
+<div class="dnd4e-info-actor-display__panel {{#if isCollapsed}}is-collapsed{{/if}}">
 	<header class="dnd4e-info-actor-display__identity">
 		<img src="{{portrait}}" alt="" draggable="false">
 		<div>
@@ -23,14 +23,16 @@
 				<span>Temp HP</span>
 				<div><b>+</b><input type="number" value="{{tempHp}}" data-resource-path="system.attributes.temphp.value"></div>
 			</label>
-			<label class="dnd4e-info-actor-display__vital-counter dnd4e-info-actor-display__vital-counter--surges">
-				<i class="fa-solid fa-heart-pulse" aria-hidden="true"></i>
-				<span>Surges</span>
-				<div><input type="number" value="{{surges.value}}" data-resource-path="system.details.surges.value"><small> / {{surges.maximum}}</small></div>
-			</label>
-			<div class="dnd4e-info-actor-display__surge-segments" style="--surge-count: {{surges.maximum}}" role="img" aria-label="Healing surges: {{surges.value}} of {{surges.maximum}}">
-				{{#each surges.segments}}<i class="{{#if filled}}is-filled{{/if}}"></i>{{/each}}
-			</div>
+			{{#if hasSurges}}
+				<label class="dnd4e-info-actor-display__vital-counter dnd4e-info-actor-display__vital-counter--surges">
+					<i class="fa-solid fa-heart-pulse" aria-hidden="true"></i>
+					<span>Surges</span>
+					<div><input type="number" value="{{surges.value}}" data-resource-path="system.details.surges.value"><small> / {{surges.maximum}}</small></div>
+				</label>
+				<div class="dnd4e-info-actor-display__surge-segments" style="--surge-count: {{surges.maximum}}" role="img" aria-label="Healing surges: {{surges.value}} of {{surges.maximum}}">
+					{{#each surges.segments}}<i class="{{#if filled}}is-filled{{/if}}"></i>{{/each}}
+				</div>
+			{{/if}}
 		</div>
 	</section>
 
@@ -44,16 +46,22 @@
 		{{/each}}
 	</section>
 
-	<nav class="dnd4e-info-actor-display__tabs" aria-label="Actor information">
-		{{#each tabs}}
-			<button type="button" class="{{#if active}}is-active{{/if}}" data-action="showSection" data-display-tab="{{key}}">
-				<i class="{{icon}}" aria-hidden="true"></i>
-				<span>{{label}}</span>
-			</button>
-		{{/each}}
-	</nav>
+	{{#if isCollapsed}}
+		<button type="button" class="dnd4e-info-actor-display__display-toggle" data-action="toggleCollapse" aria-label="Expand actor display" title="Show actions and details">
+			<i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+			<span>Show actions and details</span>
+		</button>
+	{{else}}
+		<nav class="dnd4e-info-actor-display__tabs" aria-label="Actor information">
+			{{#each tabs}}
+				<button type="button" class="{{#if active}}is-active{{/if}}" data-action="showSection" data-display-tab="{{key}}">
+					<i class="{{icon}}" aria-hidden="true"></i>
+					<span>{{label}}</span>
+				</button>
+			{{/each}}
+		</nav>
 
-	<div class="dnd4e-info-actor-display__workspace">
+		<div class="dnd4e-info-actor-display__workspace">
 		{{#if isNpcFeatures}}
 			{{#each traitCategories}}
 				<section class="dnd4e-info-actor-display__group">
@@ -125,15 +133,21 @@
 			{{/each}}
 		{{/if}}
 
-	</div>
+		</div>
 
-	<section class="dnd4e-info-actor-display__quick-actions" aria-label="Quick actions">
-		{{#each quickActions}}
-			<button type="button" data-action="quick" data-command="{{key}}" title="{{label}}">
-				<i class="{{icon}}" aria-hidden="true"></i>
-				<strong>{{label}}</strong>
-				{{#if detail}}<small>{{detail}}</small>{{/if}}
-			</button>
-		{{/each}}
-	</section>
+		<section class="dnd4e-info-actor-display__quick-actions" aria-label="Quick actions">
+			{{#each quickActions}}
+				<button type="button" data-action="quick" data-command="{{key}}" title="{{label}}">
+					<i class="{{icon}}" aria-hidden="true"></i>
+					<strong>{{label}}</strong>
+					{{#if detail}}<small>{{detail}}</small>{{/if}}
+				</button>
+			{{/each}}
+		</section>
+
+		<button type="button" class="dnd4e-info-actor-display__display-toggle" data-action="toggleCollapse" aria-label="Collapse actor display" title="Show status only">
+			<i class="fa-solid fa-chevron-up" aria-hidden="true"></i>
+			<span>Show status only</span>
+		</button>
+	{{/if}}
 </div>
