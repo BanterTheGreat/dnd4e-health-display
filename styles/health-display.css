@@ -235,6 +235,7 @@
 	flex: none;
 	gap: 0.35rem;
 	min-height: 2.25rem;
+	max-width: min(100%, 20rem);
 	margin: 0;
 	min-width: 0;
 	padding: 0;
@@ -244,7 +245,6 @@
 	text-shadow: 0 0.1rem 0.15rem #000, 0 0 0.25rem #000;
 	transform: none;
 	vertical-align: middle;
-	white-space: nowrap;
 }
 
 .dnd4e-health-display__effect img {
@@ -265,7 +265,18 @@
 	align-items: center;
 	justify-content: center;
 	min-height: 2.25rem;
+	min-width: 0;
 	line-height: 1;
+}
+
+.dnd4e-health-display__effect-name {
+	display: -webkit-box;
+	overflow: hidden;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 3;
+	line-height: 1.15;
+	text-align: center;
+	overflow-wrap: anywhere;
 }
 
 .dnd4e-health-display__duration {
