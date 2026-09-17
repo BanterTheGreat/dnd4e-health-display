@@ -188,6 +188,7 @@ class CombatStartSetup extends HandlebarsApplicationMixin(ApplicationV2) {
 		if (!hostileCombatants.some((combatant) => combatant.id === this.commanderCombatantId)) {
 			this.commanderCombatantId = getDefaultCommanderId(hostileCombatants);
 		}
+		const commanderCombatant = hostileCombatants.find((combatant) => combatant.id === this.commanderCombatantId);
 		const combatants = Array.from(this.combat?.combatants ?? []).map((combatant) => ({
 			...getCombatantData(combatant),
 			disposition: getDispositionLabel(combatant.token?.disposition),
@@ -202,6 +203,8 @@ class CombatStartSetup extends HandlebarsApplicationMixin(ApplicationV2) {
 			combatName: this.combat?.name ?? "Encounter",
 			draft: this.draft,
 			combatants,
+			commanderPreview: commanderCombatant ? getCombatantData(commanderCombatant) : null,
+			commanderPreviewScale: Number(this.draft.commanderZoom ?? 100) / 100,
 			hasCombatants: combatants.length > 0,
 			availableFriendlyCount: availableFriendlyTokens.length,
 			availableNeutralCount: availableNeutralTokens.length,
@@ -218,6 +221,27 @@ class CombatStartSetup extends HandlebarsApplicationMixin(ApplicationV2) {
 		});
 	}
 
+	/** Keep the commander artwork preview synchronized with its focus and zoom sliders. */
+	_onRender(context, options) {
+		super._onRender(context, options);
+		const preview = this.element.querySelector(".dnd4e-combat-start-setup__art-preview img");
+		const horizontal = this.element.querySelector('[name="commanderPositionX"]');
+		const vertical = this.element.querySelector('[name="commanderPositionY"]');
+		const zoom = this.element.querySelector('[name="commanderZoom"]');
+		if (!preview || !horizontal || !vertical || !zoom) {
+			return;
+		}
+
+		const updatePreview = () => {
+			preview.style.objectPosition = `${horizontal.value}% ${vertical.value}%`;
+			preview.style.transformOrigin = `${horizontal.value}% ${vertical.value}%`;
+			preview.style.transform = `scale(${Number(zoom.value) / 100})`;
+		};
+		horizontal.addEventListener("input", updatePreview);
+		vertical.addEventListener("input", updatePreview);
+		zoom.addEventListener("input", updatePreview);
+	}
+
 	/** Keep the in-progress field values before performing an action. */
 	readDraft() {
 		if (!this.element) {
@@ -229,6 +253,9 @@ class CombatStartSetup extends HandlebarsApplicationMixin(ApplicationV2) {
 			title: this.element.querySelector('[name="title"]')?.value.trim() ?? "",
 			description: this.element.querySelector('[name="description"]')?.value.trim() ?? "",
 			commanderSubtitle: this.element.querySelector('[name="commanderSubtitle"]')?.value.trim() ?? "",
+			commanderPositionX: Number(this.element.querySelector('[name="commanderPositionX"]')?.value ?? 50),
+			commanderPositionY: Number(this.element.querySelector('[name="commanderPositionY"]')?.value ?? 50),
+			commanderZoom: Number(this.element.querySelector('[name="commanderZoom"]')?.value ?? 100),
 		};
 		this.selectedPresetId = this.element.querySelector('[name="preset"]')?.value ?? "";
 		return this.draft;
@@ -271,6 +298,9 @@ class CombatStartSetup extends HandlebarsApplicationMixin(ApplicationV2) {
 			title: preset.title,
 			description: preset.description,
 			commanderSubtitle: preset.commanderSubtitle ?? "",
+			commanderPositionX: preset.commanderPositionX ?? 50,
+			commanderPositionY: preset.commanderPositionY ?? 50,
+			commanderZoom: preset.commanderZoom ?? 100,
 		};
 		this.render();
 	}
@@ -358,6 +388,9 @@ class CombatStartSetup extends HandlebarsApplicationMixin(ApplicationV2) {
 			title: draft.title,
 			description: draft.description,
 			commanderSubtitle: draft.commanderSubtitle,
+			commanderPositionX: draft.commanderPositionX,
+			commanderPositionY: draft.commanderPositionY,
+			commanderZoom: draft.commanderZoom,
 		});
 		await this.close();
 	}
@@ -414,11 +447,19 @@ class CombatStartDisplay extends HandlebarsApplicationMixin(ApplicationV2) {
 		return foundry.utils.mergeObject(context, {
 			...this.presentation,
 			...roster,
+			commanderScale: Number(this.presentation.commanderZoom ?? 100) / 100,
 			isGM: game.user.isGM,
 			canRollPlayerInitiative,
 			showBriefing: this.activeTab === "briefing",
 			showStrategy: game.user.isGM && this.activeTab === "strategy",
 		});
+	}
+
+	/** Initialize enlarged portrait previews after each render. */
+	_onRender(context, options) {
+		super._onRender(context, options);
+		removePortraitPreview();
+		initializePortraitPreviews(this.element);
 	}
 
 	/** Switch the visible presentation tab. */
@@ -507,6 +548,7 @@ class CombatStartDisplay extends HandlebarsApplicationMixin(ApplicationV2) {
 			return this;
 		}
 
+		removePortraitPreview();
 		return super.close(options);
 	}
 }
@@ -518,7 +560,49 @@ function getDefaultPresentation() {
 		title: "No Road Back",
 		description: "Your enemies stand between you and the only way out.",
 		commanderSubtitle: "",
+		commanderPositionX: 50,
+		commanderPositionY: 50,
+		commanderZoom: 100,
 	};
+}
+
+/** Attach hover and keyboard-focus previews to non-commander portraits. */
+function initializePortraitPreviews(element) {
+	for (const portrait of element.querySelectorAll("[data-combat-start-portrait]")) {
+		portrait.addEventListener("mouseenter", () => showPortraitPreview(portrait));
+		portrait.addEventListener("mouseleave", removePortraitPreview);
+		portrait.addEventListener("focus", () => showPortraitPreview(portrait));
+		portrait.addEventListener("blur", removePortraitPreview);
+	}
+}
+
+/** @param {HTMLImageElement} portrait */
+function showPortraitPreview(portrait) {
+	removePortraitPreview();
+	const preview = document.createElement("aside");
+	preview.className = "dnd4e-combat-start-portrait-preview";
+	const image = document.createElement("img");
+	image.src = portrait.src;
+	image.alt = "";
+	const name = document.createElement("strong");
+	name.textContent = portrait.dataset.portraitName ?? "";
+	preview.append(image, name);
+	document.body.appendChild(preview);
+
+	const portraitRect = portrait.getBoundingClientRect();
+	const previewRect = preview.getBoundingClientRect();
+	const gap = 12;
+	const left = portraitRect.right + gap + previewRect.width <= window.innerWidth
+		? portraitRect.right + gap
+		: portraitRect.left - previewRect.width - gap;
+	const top = Math.min(Math.max(gap, portraitRect.top + portraitRect.height / 2 - previewRect.height / 2), window.innerHeight - previewRect.height - gap);
+	preview.style.left = `${left}px`;
+	preview.style.top = `${top}px`;
+}
+
+/** Remove the currently visible enlarged portrait preview. */
+function removePortraitPreview() {
+	document.querySelector(".dnd4e-combat-start-portrait-preview")?.remove();
 }
 
 /** @returns {Array<object>} */

@@ -73,16 +73,17 @@
 .dnd4e-combat-start-setup__workspace {
 	display: grid;
 	grid-template-columns: minmax(0, 1fr) 20rem;
-	height: 100%;
+	height: auto;
 	min-height: 0;
 	overflow: hidden;
 }
 
 .dnd4e-combat-start-setup__editor {
-	display: flex;
+	display: grid;
+	grid-template-rows: auto minmax(0, 1fr) auto;
 	min-width: 0;
 	min-height: 0;
-	flex-direction: column;
+	overflow: hidden;
 }
 
 .dnd4e-combat-start-setup__presets,
@@ -301,7 +302,11 @@
 .dnd4e-combat-start-setup__fields {
 	display: grid;
 	grid-template-columns: 1fr 1fr;
+	min-height: 0;
+	align-content: start;
 	gap: 0.85rem;
+	overflow-y: auto;
+	scrollbar-gutter: stable;
 }
 
 .dnd4e-combat-start-setup__fields label > span {
@@ -313,12 +318,80 @@
 	grid-column: 1 / -1;
 }
 
+.dnd4e-combat-start-setup__art-focus {
+	display: grid;
+	grid-template-columns: 10rem minmax(0, 1fr);
+	align-items: stretch;
+	gap: 0.75rem;
+	margin: 0;
+	padding: 0.55rem 0.7rem 0.65rem;
+	border: 1px solid #4b4033;
+	border-radius: 0.25rem;
+}
+
+.dnd4e-combat-start-setup__art-focus legend {
+	padding: 0 0.3rem;
+	color: #c69b5d;
+	font-size: 0.62rem;
+	font-weight: 800;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+}
+
+.dnd4e-combat-start-setup__art-preview {
+	position: relative;
+	height: 6.5rem;
+	margin: 0;
+	overflow: hidden;
+	border: 1px solid #76593a;
+	border-radius: 0.2rem;
+	background: #08090c;
+}
+
+.dnd4e-combat-start-setup__art-preview img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	transition: object-position 100ms ease, transform 100ms ease;
+}
+
+.dnd4e-combat-start-setup__art-preview figcaption {
+	position: absolute;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	padding: 1rem 0.4rem 0.3rem;
+	overflow: hidden;
+	background: linear-gradient(transparent, rgb(5 6 8 / 92%));
+	color: #ead6b5;
+	font-size: 0.62rem;
+	font-weight: 700;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.dnd4e-combat-start-setup__art-controls {
+	display: grid;
+	grid-column: 2;
+	align-content: center;
+	gap: 0.55rem;
+}
+
+.dnd4e-combat-start-setup__art-focus label > span {
+	margin-bottom: 0.1rem;
+}
+
+.dnd4e-combat-start-setup__art-focus input[type="range"] {
+	height: 1.35rem;
+}
+
 .dnd4e-combat-start-setup__actions {
 	display: flex;
 	align-items: flex-end;
 	justify-content: flex-end;
 	gap: 0.55rem;
-	margin-top: auto;
+	margin-top: 0;
 	padding: 0.9rem 1.3rem 1.15rem;
 	border-top: 1px solid #332b23;
 }
@@ -544,6 +617,9 @@
 	background: radial-gradient(circle, #4b2523, #111216 70%);
 	filter: saturate(0.78) contrast(1.08);
 	object-fit: cover;
+	object-position: var(--commander-position-x, 50%) var(--commander-position-y, 50%);
+	transform: scale(var(--commander-scale, 1));
+	transform-origin: var(--commander-position-x, 50%) var(--commander-position-y, 50%);
 }
 
 .dnd4e-combat-start__commander-shade {
@@ -682,6 +758,46 @@
 	border-radius: 0.2rem;
 	background: #24252a;
 	object-fit: cover;
+}
+
+[data-combat-start-portrait] {
+	cursor: zoom-in;
+}
+
+[data-combat-start-portrait]:focus-visible {
+	outline: 2px solid #e2bd77;
+	outline-offset: 2px;
+}
+
+.dnd4e-combat-start-portrait-preview {
+	position: fixed;
+	z-index: 200;
+	display: grid;
+	width: 15rem;
+	margin: 0;
+	overflow: hidden;
+	border: 1px solid #a57b48;
+	border-radius: 0.3rem;
+	background: #0b0c0f;
+	box-shadow: 0 1rem 3rem rgb(0 0 0 / 78%);
+	pointer-events: none;
+}
+
+.dnd4e-combat-start-portrait-preview img {
+	display: block;
+	width: 15rem;
+	height: 15rem;
+	background: #15161a;
+	object-fit: contain;
+}
+
+.dnd4e-combat-start-portrait-preview strong {
+	padding: 0.55rem 0.7rem;
+	border-top: 1px solid #5d4630;
+	color: #ebd7b5;
+	font-family: var(--font-h1, "Modesto Condensed", serif);
+	font-size: 1rem;
+	text-align: center;
 }
 
 .dnd4e-combat-start__heroes strong,

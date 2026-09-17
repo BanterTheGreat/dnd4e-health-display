@@ -36,6 +36,29 @@
 					<span>Commander subtitle</span>
 					<input type="text" name="commanderSubtitle" value="{{draft.commanderSubtitle}}" placeholder="Optional text beneath the commander name">
 				</label>
+				<fieldset class="dnd4e-combat-start-setup__art-focus dnd4e-combat-start-setup__wide">
+					<legend>Commander artwork focus</legend>
+					{{#if commanderPreview}}
+						<figure class="dnd4e-combat-start-setup__art-preview">
+							<img src="{{commanderPreview.img}}" alt="Commander artwork alignment preview" style="object-position: {{draft.commanderPositionX}}% {{draft.commanderPositionY}}%; transform-origin: {{draft.commanderPositionX}}% {{draft.commanderPositionY}}%; transform: scale({{commanderPreviewScale}})">
+							<figcaption>{{commanderPreview.name}}</figcaption>
+						</figure>
+					{{/if}}
+					<div class="dnd4e-combat-start-setup__art-controls">
+						<label>
+							<span>Horizontal</span>
+							<input type="range" name="commanderPositionX" min="0" max="100" step="1" value="{{draft.commanderPositionX}}">
+						</label>
+						<label>
+							<span>Vertical</span>
+							<input type="range" name="commanderPositionY" min="0" max="100" step="1" value="{{draft.commanderPositionY}}">
+						</label>
+						<label>
+							<span>Zoom</span>
+							<input type="range" name="commanderZoom" min="100" max="200" step="5" value="{{draft.commanderZoom}}">
+						</label>
+					</div>
+				</fieldset>
 			</div>
 
 			<footer class="dnd4e-combat-start-setup__actions">
