@@ -85,7 +85,7 @@
 					<footer class="dnd4e-combat-start__combat-live"><i class="fa-solid fa-swords" aria-hidden="true"></i> Encounter in progress</footer>
 				{{else if isGM}}
 					<footer>
-						<button type="button" data-action="rollEnemyInitiative" class="dnd4e-combat-start__start dnd4e-combat-start__start--secondary">Roll Enemy Initiative</button>
+						<button type="button" data-action="rollEnemyInitiative" class="dnd4e-combat-start__start dnd4e-combat-start__start--secondary" {{#unless hasUnrolledEnemyInitiative}}disabled{{/unless}}>{{#if hasUnrolledEnemyInitiative}}Roll Enemy Initiative{{else}}Enemy Initiative Rolled{{/if}}</button>
 						<button type="button" data-action="startCombat" class="dnd4e-combat-start__start">Start Encounter</button>
 						<small>Begins combat with the current initiative order.</small>
 					</footer>

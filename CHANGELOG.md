@@ -18,6 +18,8 @@ Refined mark connectors with a subtle dark under-stroke for map contrast, rounde
 
 Mark connections now appear only while either linked token is hovered or controlled.
 
+Battle Briefing now left-aligns its encounter title and subtitle, disables and relabels the Roll Enemy Initiative action once every NPC already has an initiative roll, and shows a more compact initiative order track.
+
 ## 2.0
 
 Streamlined the actor display typography to Signika for interface and supporting text, reserving Modesto Condensed for character identity and headline resource values while retaining italic flavour copy.

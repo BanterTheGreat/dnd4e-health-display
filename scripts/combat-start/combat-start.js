@@ -731,6 +731,7 @@ class CombatStartDisplay extends HandlebarsApplicationMixin(ApplicationV2) {
 		this.render();
 	}
 
+
 	/** @returns {object} */
 	async _prepareContext(options) {
 		const context = await super._prepareContext(options);
@@ -742,6 +743,9 @@ class CombatStartDisplay extends HandlebarsApplicationMixin(ApplicationV2) {
 			&& combatant.actor?.hasPlayerOwner
 			&& combatant.isOwner
 			&& combatant.initiative == null);
+		const hasUnrolledEnemyInitiative = combat?.combatants.some((combatant) => combatant.actor
+			&& !combatant.actor.hasPlayerOwner
+			&& combatant.initiative == null) ?? false;
 		return foundry.utils.mergeObject(context, {
 			...presentation,
 			...roster,
@@ -749,6 +753,7 @@ class CombatStartDisplay extends HandlebarsApplicationMixin(ApplicationV2) {
 			isGM: game.user.isGM,
 			combatStarted: Boolean(combat?.started),
 			canRollPlayerInitiative,
+			hasUnrolledEnemyInitiative,
 			initiativeTracker,
 			initiativeTrackerPlacement: game.settings.get(MODULE_ID, INITIATIVE_TRACKER_PLACEMENT_SETTING),
 			showBriefing: this.activeTab === "briefing",
@@ -846,10 +851,10 @@ class CombatStartDisplay extends HandlebarsApplicationMixin(ApplicationV2) {
 
 		const combat = game.combats.get(this.combatId);
 		const npcIds = combat?.combatants
-			.filter((combatant) => combatant.actor && !combatant.actor.hasPlayerOwner)
+			.filter((combatant) => combatant.actor && !combatant.actor.hasPlayerOwner && combatant.initiative == null)
 			.map((combatant) => combatant.id) ?? [];
 		if (!npcIds.length) {
-			ui.notifications.info("There are no NPC combatants to roll initiative for.");
+			ui.notifications.info("Every NPC combatant already has an initiative roll.");
 			return;
 		}
 

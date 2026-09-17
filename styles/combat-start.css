@@ -845,18 +845,18 @@
 }
 
 .dnd4e-combat-start__initiative-line {
-	--pin-size: 2.1rem;
+	--pin-size: 2.2rem;
 	display: flex;
 	align-items: center;
-	gap: 0.8rem;
-	min-height: 6.4rem;
+	gap: 0.6rem;
+	min-height: 2.4rem;
 }
 
 .dnd4e-combat-start__initiative-track {
 	position: relative;
 	flex: 1 1 auto;
 	height: 2px;
-	margin: 3rem 0;
+	margin: 1.1rem 0;
 	border-radius: 1px;
 	background: linear-gradient(90deg, #423a36, #79262d, #423a36);
 }
@@ -870,8 +870,8 @@
 
 .dnd4e-combat-start__initiative-pin img {
 	display: block;
-	width: 2.1rem;
-	height: 2.1rem;
+	width: 2.2rem;
+	height: 2.2rem;
 	border: 2px solid #a64a43;
 	border-radius: 50%;
 	background: #0c0d10;
@@ -927,8 +927,8 @@
 }
 
 .dnd4e-combat-start__initiative-unrolled-pins img {
-	width: 1.6rem;
-	height: 1.6rem;
+	width: 1.2rem;
+	height: 1.2rem;
 	border: 1px solid #423a36;
 	border-radius: 50%;
 	object-fit: cover;
@@ -962,7 +962,7 @@
 	width: 2px;
 	height: auto;
 	flex: 1 1 auto;
-	margin: 3rem 0;
+	margin: 1.1rem 0;
 	background: linear-gradient(180deg, #423a36, #79262d, #423a36);
 }
 
@@ -981,7 +981,7 @@
 	padding: 1.15rem 1.65rem 1rem;
 	border-bottom: 1px solid #4b3828;
 	background: radial-gradient(circle at 50% 0, rgb(112 38 34 / 20%), transparent 58%), #121216;
-	text-align: center;
+	text-align: left;
 }
 
 .dnd4e-combat-start__encounter-heading h1 {
@@ -1065,12 +1065,14 @@
 	object-position: var(--commander-position-x, 50%) var(--commander-position-y, 50%);
 	transform: scale(var(--commander-scale, 1));
 	transform-origin: var(--commander-position-x, 50%) var(--commander-position-y, 50%);
+	pointer-events: none;
 }
 
 .dnd4e-combat-start__commander-shade {
 	position: absolute;
 	inset: 0;
 	background: linear-gradient(transparent 30%, rgb(7 8 11 / 15%) 55%, rgb(7 8 11 / 72%) 85%);
+	pointer-events: none;
 }
 
 .dnd4e-combat-start__commander-info {
@@ -1338,7 +1340,7 @@
 
 .dnd4e-combat-start__party footer {
 	display: grid;
-	gap: 0.3rem;
+	gap: 0.6rem;
 	margin-top: 0.5rem;
 	padding-top: 0.55rem;
 	border-top: 1px solid rgb(139 116 80 / 35%);
@@ -1379,6 +1381,8 @@
 
 .dnd4e-combat-start__start:disabled {
 	opacity: 0.55;
+	filter: grayscale(0.85);
+	cursor: not-allowed;
 	transform: none;
 }
 
