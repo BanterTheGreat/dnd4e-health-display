@@ -7,7 +7,7 @@
 
 	<div class="dnd4e-combat-start-setup__workspace">
 		<div class="dnd4e-combat-start-setup__editor">
-			<section class="dnd4e-combat-start-setup__presets" aria-label="Saved Combat Start presets">
+			<section class="dnd4e-combat-start-setup__presets" aria-label="Saved Battle Briefing presets">
 				<label for="dnd4e-combat-start-preset">Saved encounter</label>
 				<div class="dnd4e-combat-start-setup__preset-row">
 					<select id="dnd4e-combat-start-preset" name="preset">
@@ -93,9 +93,12 @@
 			</div>
 			<div class="dnd4e-combat-start-setup__combatants">
 				{{#each combatants}}
-					<article class="{{dispositionClass}} {{#if isCommander}}is-commander{{/if}}">
+					<article class="{{dispositionClass}} {{#if isCommander}}is-commander{{/if}} {{#if isHidden}}is-hidden{{/if}}">
 						<img src="{{img}}" alt="">
 						<div><strong>{{name}}</strong><small>{{disposition}} · Level {{level}} · {{role}}</small></div>
+						<button type="button" data-action="toggleCombatantHidden" data-combatant-id="{{id}}" class="dnd4e-combat-start-setup__visibility-toggle" aria-pressed="{{isHidden}}" title="{{#if isHidden}}Show{{else}}Hide{{/if}} {{name}} to players">
+							<i class="fa-solid {{#if isHidden}}fa-eye-slash{{else}}fa-eye{{/if}}" aria-hidden="true"></i>
+						</button>
 						{{#if canBeCommander}}
 							<button type="button" data-action="setCommander" data-combatant-id="{{id}}" class="dnd4e-combat-start-setup__commander-select" aria-pressed="{{isCommander}}" title="Select {{name}} as enemy commander">
 								<i class="fa-solid fa-crown" aria-hidden="true"></i>

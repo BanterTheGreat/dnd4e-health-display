@@ -9,7 +9,7 @@ const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 /** Register the world state used by the independent combat-start submodule. */
 export function registerCombatStartSettings() {
 	game.settings.register(MODULE_ID, PRESETS_SETTING, {
-		name: "Combat Start presets",
+		name: "Battle Briefing presets",
 		scope: "world",
 		config: false,
 		type: Object,
@@ -17,7 +17,7 @@ export function registerCombatStartSettings() {
 	});
 
 	game.settings.register(MODULE_ID, ACTIVE_SETTING, {
-		name: "Active Combat Start presentation",
+		name: "Active Battle Briefing presentation",
 		scope: "world",
 		config: false,
 		type: Object,
@@ -38,7 +38,7 @@ export function registerCombatStart() {
 	ui.combat?.render();
 }
 
-/** Add the GM-only Combat Start button to the combat tracker. */
+/** Add the GM-only Battle Briefing button to the combat tracker. */
 function addCombatStartButton(app, element) {
 	if (!game.user.isGM || element.querySelector("[data-dnd4e-combat-start]")) {
 		return;
@@ -55,8 +55,8 @@ function addCombatStartButton(app, element) {
 	button.type = "button";
 	button.className = "dnd4e-combat-start__tracker-button";
 	button.dataset.dnd4eCombatStart = "";
-	button.title = "Prepare a Combat Start presentation";
-	button.innerHTML = '<i class="fa-solid fa-swords" aria-hidden="true"></i><span>Combat Start</span>';
+	button.title = "Prepare a Battle Briefing presentation";
+	button.innerHTML = '<i class="fa-solid fa-swords" aria-hidden="true"></i><span>Battle Briefing</span>';
 	button.addEventListener("click", () => void openCombatStartSetup(app.viewed ?? game.combat));
 	header.append(button);
 }
@@ -65,7 +65,7 @@ function addCombatStartButton(app, element) {
 async function openCombatStartSetup(combat) {
 	if (!combat) {
 		if (!canvas.scene) {
-			ui.notifications.warn("Activate a scene before preparing its Combat Start screen.");
+			ui.notifications.warn("Activate a scene before preparing its Battle Briefing screen.");
 			return;
 		}
 
@@ -150,7 +150,7 @@ class CombatStartSetup extends HandlebarsApplicationMixin(ApplicationV2) {
 		id: "dnd4e-combat-start-setup",
 		classes: ["dnd4e-combat-start-setup"],
 		position: { width: 940, height: 650 },
-		window: { title: "Prepare Combat Start", resizable: true },
+		window: { title: "Prepare Battle Briefing", resizable: true },
 		actions: {
 			show: CombatStartSetup.prototype.onShow,
 			savePreset: CombatStartSetup.prototype.onSavePreset,
@@ -160,6 +160,7 @@ class CombatStartSetup extends HandlebarsApplicationMixin(ApplicationV2) {
 			addNeutralTokens: CombatStartSetup.prototype.onAddNeutralTokens,
 			addHostileTokens: CombatStartSetup.prototype.onAddHostileTokens,
 			setCommander: CombatStartSetup.prototype.onSetCommander,
+			toggleCombatantHidden: CombatStartSetup.prototype.onToggleCombatantHidden,
 		},
 	};
 
@@ -184,7 +185,8 @@ class CombatStartSetup extends HandlebarsApplicationMixin(ApplicationV2) {
 		const context = await super._prepareContext(options);
 		const presets = getPresets();
 		const hostileCombatants = Array.from(this.combat?.combatants ?? [])
-			.filter((combatant) => combatant.token?.disposition === CONST.TOKEN_DISPOSITIONS.HOSTILE);
+			.filter((combatant) => combatant.token?.disposition === CONST.TOKEN_DISPOSITIONS.HOSTILE
+				&& !isCombatantHidden(combatant));
 		if (!hostileCombatants.some((combatant) => combatant.id === this.commanderCombatantId)) {
 			this.commanderCombatantId = getDefaultCommanderId(hostileCombatants);
 		}
@@ -193,7 +195,9 @@ class CombatStartSetup extends HandlebarsApplicationMixin(ApplicationV2) {
 			...getCombatantData(combatant),
 			disposition: getDispositionLabel(combatant.token?.disposition),
 			dispositionClass: getDispositionClass(combatant.token?.disposition),
-			canBeCommander: combatant.token?.disposition === CONST.TOKEN_DISPOSITIONS.HOSTILE,
+			isHidden: isCombatantHidden(combatant),
+			canBeCommander: combatant.token?.disposition === CONST.TOKEN_DISPOSITIONS.HOSTILE
+				&& !isCombatantHidden(combatant),
 			isCommander: combatant.id === this.commanderCombatantId,
 		}));
 		const availableFriendlyTokens = getAvailableSceneTokens(this.combat, CONST.TOKEN_DISPOSITIONS.FRIENDLY);
@@ -265,7 +269,7 @@ class CombatStartSetup extends HandlebarsApplicationMixin(ApplicationV2) {
 	async onSavePreset() {
 		const draft = this.readDraft();
 		if (!draft.name) {
-			ui.notifications.warn("Give this Combat Start preset a name first.");
+			ui.notifications.warn("Give this Battle Briefing preset a name first.");
 			return;
 		}
 
@@ -281,7 +285,7 @@ class CombatStartSetup extends HandlebarsApplicationMixin(ApplicationV2) {
 
 		await game.settings.set(MODULE_ID, PRESETS_SETTING, { items: nextPresets });
 		this.selectedPresetId = saved.id;
-		ui.notifications.info(`Saved Combat Start preset “${saved.name}”.`);
+		ui.notifications.info(`Saved Battle Briefing preset “${saved.name}”.`);
 		this.render();
 	}
 
@@ -339,6 +343,29 @@ class CombatStartSetup extends HandlebarsApplicationMixin(ApplicationV2) {
 		this.readDraft();
 		this.commanderCombatantId = target.dataset.combatantId;
 		this.render();
+	}
+
+	/** Toggle whether a combatant and its scene token are hidden from players. */
+	async onToggleCombatantHidden(event, target) {
+		this.readDraft();
+		const combatant = this.combat?.combatants.get(target.dataset.combatantId);
+		if (!combatant) {
+			return;
+		}
+
+		const hidden = !isCombatantHidden(combatant);
+		try {
+			if (combatant.token && combatant.token.hidden !== hidden) {
+				await combatant.token.update({ hidden });
+			}
+			if (combatant.hidden !== hidden) {
+				await combatant.update({ hidden });
+			}
+			this.render();
+		} catch (error) {
+			console.error(`${MODULE_ID} | Failed to change combatant visibility.`, error);
+			ui.notifications.error("The combatant visibility could not be changed. Check the console for details.");
+		}
 	}
 
 	/**
@@ -413,7 +440,7 @@ class CombatStartDisplay extends HandlebarsApplicationMixin(ApplicationV2) {
 		id: "dnd4e-combat-start-display",
 		classes: ["dnd4e-combat-start-display"],
 		position: { width: 1040, height: 720 },
-		window: { title: "Combat Start", resizable: true },
+		window: { title: "Battle Briefing", resizable: true },
 		actions: {
 			showTab: CombatStartDisplay.prototype.onShowTab,
 			startCombat: CombatStartDisplay.prototype.onStartCombat,
@@ -441,7 +468,8 @@ class CombatStartDisplay extends HandlebarsApplicationMixin(ApplicationV2) {
 		const context = await super._prepareContext(options);
 		const combat = game.combats.get(this.combatId);
 		const roster = getCombatStartRoster(combat, this.presentation.commanderCombatantId);
-		const canRollPlayerInitiative = !game.user.isGM && combat?.combatants.some((combatant) => combatant.actor?.hasPlayerOwner
+		const canRollPlayerInitiative = !game.user.isGM && combat?.combatants.some((combatant) => !isCombatantHidden(combatant)
+			&& combatant.actor?.hasPlayerOwner
 			&& combatant.isOwner
 			&& combatant.initiative == null);
 		return foundry.utils.mergeObject(context, {
@@ -513,7 +541,8 @@ class CombatStartDisplay extends HandlebarsApplicationMixin(ApplicationV2) {
 
 		const combat = game.combats.get(this.combatId);
 		const ownedPlayerIds = combat?.combatants
-			.filter((combatant) => combatant.actor?.hasPlayerOwner
+			.filter((combatant) => !isCombatantHidden(combatant)
+				&& combatant.actor?.hasPlayerOwner
 				&& combatant.isOwner
 				&& combatant.initiative == null)
 			.map((combatant) => combatant.id) ?? [];
@@ -665,7 +694,9 @@ function getDispositionClass(disposition) {
  * @returns {object}
  */
 function getCombatStartRoster(combat, commanderCombatantId = "") {
-	const combatants = combat ? Array.from(combat.combatants) : [];
+	const combatants = combat
+		? Array.from(combat.combatants).filter((combatant) => !isCombatantHidden(combatant))
+		: [];
 	const party = combatants
 		.filter((combatant) => combatant.actor?.hasPlayerOwner)
 		.map(getCombatantData);
@@ -737,6 +768,11 @@ function getActorRole(actor) {
 	}
 
 	return actor?.system?.details?.class ?? actor?.type ?? "Combatant";
+}
+
+/** @param {Combatant} combatant @returns {boolean} */
+function isCombatantHidden(combatant) {
+	return Boolean(combatant.hidden || combatant.token?.hidden);
 }
 
 /**

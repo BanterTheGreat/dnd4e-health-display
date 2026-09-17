@@ -174,7 +174,7 @@
 
 .dnd4e-combat-start-setup__combatants article {
 	display: grid;
-	grid-template-columns: 2.25rem minmax(0, 1fr) auto;
+	grid-template-columns: 2.25rem minmax(0, 1fr) auto auto;
 	align-items: center;
 	gap: 0.5rem;
 	min-width: 0;
@@ -187,6 +187,11 @@
 	border-color: #9a7543;
 	background: linear-gradient(90deg, #211d18, #17181d);
 	box-shadow: inset 2px 0 #c2924e;
+}
+
+.dnd4e-combat-start-setup__combatants article.is-hidden {
+	opacity: 0.58;
+	background: repeating-linear-gradient(-45deg, #17181d, #17181d 0.35rem, #121318 0.35rem, #121318 0.7rem);
 }
 
 .dnd4e-combat-start-setup__combatants img {
@@ -222,7 +227,8 @@
 	color: #e6a19a;
 }
 
-.dnd4e-combat-start-setup__commander-select {
+.dnd4e-combat-start-setup__commander-select,
+.dnd4e-combat-start-setup__visibility-toggle {
 	display: grid;
 	place-items: center;
 	width: 1.8rem;
@@ -232,6 +238,21 @@
 	border-radius: 0.2rem;
 	background: #211f1c;
 	color: #81745f;
+}
+
+.dnd4e-combat-start-setup__visibility-toggle {
+	color: #b8a78c;
+}
+
+.dnd4e-combat-start-setup__visibility-toggle:hover {
+	border-color: #a9895f;
+	color: #f0d5a9;
+}
+
+.dnd4e-combat-start-setup__visibility-toggle[aria-pressed="true"] {
+	border-color: #76504b;
+	background: #34201e;
+	color: #d88f86;
 }
 
 .dnd4e-combat-start-setup__commander-select:hover {
