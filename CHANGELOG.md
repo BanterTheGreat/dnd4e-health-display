@@ -6,6 +6,8 @@ Added an independent Battle Briefing submodule with a GM combat-tracker control,
 
 Battle Briefing Setup now lets the GM remove individual combatants from the encounter without deleting their scene tokens.
 
+Reopening the Battle Briefing from the combat tracker for an encounter already in progress now only opens a private GM view, instead of also reopening the presentation for connected players.
+
 NPC attacking powers and feature abilities now open the DnD4e attack-roll dialog from the Actor display instead of posting their item cards directly to chat, consuming limited power uses as normal. NPC powers now also provide separate controls to send their cards to chat or roll their damage, while player-character powers can expand individually to show the same complete rules details used for NPC powers.
 
 Added a live, case-insensitive search field to player-character Powers tabs, filtering cards and their empty categories by power name as the user types.
@@ -19,6 +21,12 @@ Refined mark connectors with a subtle dark under-stroke for map contrast, rounde
 Mark connections now appear only while either linked token is hovered or controlled.
 
 Battle Briefing now left-aligns its encounter title and subtitle, disables and relabels the Roll Enemy Initiative action once every NPC already has an initiative roll, and shows a more compact initiative order track.
+
+Battle Briefing's initiative order now shows a scrolling row of numbered portrait chips instead of a single fixed-width pin track, so large encounters no longer crowd or overlap; combatant names stay hidden and appear in the existing hover/focus artwork preview instead.
+
+Fixed the Environment overlay never appearing when its notes were prepared before the encounter started. The Turn Pointer dialog and Environment overlay no longer show the default window close/control buttons, since neither is meant to be dismissed by hand, and both now reopen wherever the GM last left them instead of snapping back to the center of the screen.
+
+Fixed saved Battle Briefing presets losing which token each turn pointer was assigned to. Presets now remember pointer targets by actor instead of by that encounter's own combatant IDs, so they still apply correctly once loaded into a different encounter.
 
 ## 2.0
 

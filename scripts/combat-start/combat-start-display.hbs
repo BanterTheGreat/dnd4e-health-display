@@ -7,9 +7,6 @@
 			<button type="button" data-action="showTab" data-tab="strategy" class="{{#if showStrategy}}is-active{{/if}}">
 				<i class="fa-solid fa-map" aria-hidden="true"></i> Strategy
 			</button>
-			<button type="button" data-action="hidePresentation" class="dnd4e-combat-start__hide">
-				<i class="fa-solid fa-xmark" aria-hidden="true"></i> Hide from Players
-			</button>
 		{{/if}}
 	</nav>
 
@@ -99,17 +96,17 @@
 			</div>
 
 			<section class="dnd4e-combat-start__initiative-tracker" aria-label="Initiative order">
-				<header><i class="fa-solid fa-list-ol" aria-hidden="true"></i><span>Initiative Order</span></header>
+				<header><i class="fa-solid fa-list-ol" aria-hidden="true"></i><span>Initiative Order — {{initiativeTracker.count}} combatants</span></header>
 				{{#if initiativeTracker.hasRolled}}
-					<div class="dnd4e-combat-start__initiative-line">
-						<div class="dnd4e-combat-start__initiative-track">
-							{{#each initiativeTracker.rolled}}
-								<div class="dnd4e-combat-start__initiative-pin {{dispositionClass}} {{#if isCurrent}}is-current{{/if}} {{#if isHidden}}is-hidden{{/if}}" style="--pos: {{position}}">
-									<img src="{{img}}" alt="" tabindex="0" aria-label="Preview {{name}} artwork" data-combat-start-portrait data-portrait-name="{{name}} — Init {{initiative}}">
-									{{#if isHidden}}<i class="fa-solid fa-eye-slash" aria-hidden="true"></i>{{/if}}
-								</div>
-							{{/each}}
-						</div>
+					<div class="dnd4e-combat-start__initiative-ribbon">
+						{{#each initiativeTracker.rolled}}
+							<div class="dnd4e-combat-start__initiative-chip {{dispositionClass}} {{#if isCurrent}}is-current{{/if}} {{#if isHidden}}is-hidden{{/if}}">
+								<span class="dnd4e-combat-start__initiative-chip-seq">#{{seq}}</span>
+								<img src="{{img}}" alt="" tabindex="0" aria-label="Preview {{name}} artwork" data-combat-start-portrait data-portrait-name="{{name}} — Init {{initiative}}">
+								{{#if isHidden}}<i class="fa-solid fa-eye-slash" aria-hidden="true"></i>{{/if}}
+								<span class="dnd4e-combat-start__initiative-chip-value">{{initiative}}</span>
+							</div>
+						{{/each}}
 					</div>
 				{{else}}
 					<p class="dnd4e-combat-start__empty">Initiative has not been rolled yet.</p>

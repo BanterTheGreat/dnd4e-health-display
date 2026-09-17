@@ -20,7 +20,7 @@ import {
 	registerCombatStart,
 	registerCombatStartSettings,
 } from "./scripts/combat-start/combat-start.js";
-import { registerStrategy } from "./scripts/combat-start/strategy.js";
+import { registerStrategy, registerStrategySettings } from "./scripts/combat-start/strategy.js";
 
 Hooks.once("init", () => {
 	registerHealthDisplaySettings();
@@ -28,6 +28,7 @@ Hooks.once("init", () => {
 	registerTeamDisplaySettings();
 	registerMarkDisplaySettings();
 	registerCombatStartSettings();
+	registerStrategySettings();
 });
 
 Hooks.once("ready", () => {

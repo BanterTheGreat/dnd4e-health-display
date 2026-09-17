@@ -90,11 +90,16 @@ async function openBattleBriefing(combat) {
 	await openCombatStartSetup(combat);
 }
 
-/** Show the live briefing for an encounter already in progress, skipping the setup dialog. */
+/**
+ * Show the live briefing for an encounter already in progress, skipping the setup dialog.
+ *
+ * The encounter is already running, so this is a GM-only peek: unlike a freshly prepared
+ * presentation, it never touches the synchronized {@link ACTIVE_SETTING} and therefore never
+ * opens the display for connected players.
+ */
 async function openStartedCombatDisplay(combat) {
-	const active = game.settings.get(MODULE_ID, ACTIVE_SETTING);
-	if (active?.id && active.combatId === combat.id) {
-		ui.Dnd4eCombatStartDisplay?.render(true);
+	if (ui.Dnd4eCombatStartDisplay?.combatId === combat.id) {
+		ui.Dnd4eCombatStartDisplay.render(true);
 		return;
 	}
 
@@ -106,10 +111,9 @@ async function openStartedCombatDisplay(combat) {
 		});
 	}
 
-	await game.settings.set(MODULE_ID, ACTIVE_SETTING, {
-		id: foundry.utils.randomID(),
-		combatId: combat.id,
-	});
+	await ui.Dnd4eCombatStartDisplay?.close();
+	ui.Dnd4eCombatStartDisplay = new CombatStartDisplay({}, { combatId: combat.id, isGMOnly: true });
+	ui.Dnd4eCombatStartDisplay.render(true);
 }
 
 /**
@@ -215,7 +219,7 @@ function closeDeletedCombatDisplay(combat) {
 		return;
 	}
 
-	if (game.user.isGM) {
+	if (game.user.isGM && !ui.Dnd4eCombatStartDisplay.presentation.isGMOnly) {
 		void game.settings.set(MODULE_ID, ACTIVE_SETTING, {});
 	} else {
 		closeCombatStartDisplay();
@@ -513,7 +517,14 @@ class CombatStartSetup extends HandlebarsApplicationMixin(ApplicationV2) {
 			id: existing?.id ?? foundry.utils.randomID(),
 			...draft,
 			expectedCombatants: getExpectedCombatants(this.combat),
-			strategy,
+			strategy: {
+				environment: strategy.environment,
+				pointers: strategy.pointers.map((pointer) => ({
+					id: pointer.id,
+					actorIds: getActorIdsForCombatantIds(pointer.combatantIds, this.combat),
+					notes: pointer.notes,
+				})),
+			},
 		};
 		const nextPresets = existing
 			? presets.map((preset) => preset.id === saved.id ? saved : preset)
@@ -543,7 +554,14 @@ class CombatStartSetup extends HandlebarsApplicationMixin(ApplicationV2) {
 			commanderPositionY: preset.commanderPositionY ?? 50,
 			commanderZoom: preset.commanderZoom ?? 100,
 		};
-		this.strategyDraft = foundry.utils.deepClone(preset.strategy ?? getDefaultStrategy());
+		this.strategyDraft = {
+			environment: foundry.utils.deepClone(preset.strategy?.environment ?? []),
+			pointers: (preset.strategy?.pointers ?? []).map((pointer) => ({
+				id: pointer.id,
+				notes: foundry.utils.deepClone(pointer.notes ?? []),
+				combatantIds: getCombatantIdsForActorIds(pointer.actorIds ?? [], this.combat),
+			})),
+		};
 		this.activeTab = "briefing";
 		this.render();
 	}
@@ -713,7 +731,6 @@ class CombatStartDisplay extends HandlebarsApplicationMixin(ApplicationV2) {
 			rollEnemyInitiative: CombatStartDisplay.prototype.onRollEnemyInitiative,
 			rollInitiative: CombatStartDisplay.prototype.onRollInitiative,
 			forceRollInitiative: CombatStartDisplay.prototype.onForceRollInitiative,
-			hidePresentation: CombatStartDisplay.prototype.onHidePresentation,
 		},
 	};
 
@@ -779,6 +796,8 @@ class CombatStartDisplay extends HandlebarsApplicationMixin(ApplicationV2) {
 		if (heroes && this._heroesScrollTop != null) {
 			heroes.scrollTop = this._heroesScrollTop;
 		}
+		this.element.querySelector(".dnd4e-combat-start__initiative-chip.is-current")
+			?.scrollIntoView({ inline: "center", block: "nearest" });
 		for (const input of this.element.querySelectorAll(".dnd4e-combat-start__initiative-input")) {
 			input.addEventListener("change", () => this.onEditInitiative(input));
 		}
@@ -835,7 +854,7 @@ class CombatStartDisplay extends HandlebarsApplicationMixin(ApplicationV2) {
 			if (!combat.started) {
 				await combat.startCombat();
 			}
-			this.render();
+			await this.close();
 		} catch (error) {
 			console.error(`${MODULE_ID} | Failed to start prepared encounter.`, error);
 			ui.notifications.error("The encounter could not be started. Check the console for details.");
@@ -922,22 +941,23 @@ class CombatStartDisplay extends HandlebarsApplicationMixin(ApplicationV2) {
 		}
 	}
 
-	/** Hide the current presentation without starting its encounter. */
-	async onHidePresentation() {
-		if (game.user.isGM) {
-			await game.settings.set(MODULE_ID, ACTIVE_SETTING, {});
-		}
-	}
-
-	/** Turn GM dismissal into a synchronized hide while players close normally. */
+	/** Turn GM dismissal of a synchronized presentation into a synchronized hide; a GM-only peek and player dismissal both close normally. */
 	async close(options = {}) {
-		if (game.user.isGM && game.settings.get(MODULE_ID, ACTIVE_SETTING)?.id) {
+		if (!this.presentation.isGMOnly && game.user.isGM && game.settings.get(MODULE_ID, ACTIVE_SETTING)?.id) {
 			await game.settings.set(MODULE_ID, ACTIVE_SETTING, {});
 			return this;
 		}
 
 		removePortraitPreview();
 		return super.close(options);
+	}
+
+	/** Clear the shared UI reference once a GM-only peek actually closes. */
+	_onClose(options) {
+		super._onClose(options);
+		if (ui.Dnd4eCombatStartDisplay === this) {
+			ui.Dnd4eCombatStartDisplay = null;
+		}
 	}
 }
 
@@ -1132,10 +1152,10 @@ function getCombatStartRoster(combat, commanderCombatantId = "") {
  * Build the initiative order shown in the shared Battle Briefing.
  *
  * Combatants hidden by the GM remain excluded so the player-facing briefing
- * does not reveal concealed enemies. Pins are placed by Foundry's own turn
+ * does not reveal concealed enemies. Chips are ordered by Foundry's own turn
  * order (`combat.turns`) rather than by raw initiative value, since that is
  * the authoritative, unambiguous order — including however the system
- * breaks ties — and avoids stacking multiple pins on top of each other.
+ * breaks ties.
  *
  * @param {Combat|null} combat
  * @returns {{rolled: Array<object>, unrolled: Array<object>, hasRolled: boolean}}
@@ -1155,10 +1175,44 @@ function getInitiativeTracker(combat, isGM = false) {
 	const rolled = entries.filter((entry) => entry.rawInitiative != null);
 	const unrolled = entries.filter((entry) => entry.rawInitiative == null);
 	rolled.forEach((entry, index) => {
-		entry.position = rolled.length > 1 ? Math.round((index / (rolled.length - 1)) * 100) : 50;
+		entry.seq = index + 1;
 	});
 
-	return { rolled, unrolled, hasRolled: rolled.length > 0 };
+	return { rolled, unrolled, hasRolled: rolled.length > 0, count: entries.length };
+}
+
+/**
+ * Reduce a turn pointer's combatant-specific ids to the actors they belong to, so a saved preset
+ * can be re-applied to a different encounter whose combatants have entirely different ids.
+ *
+ * @param {string[]} combatantIds
+ * @param {Combat|null} combat
+ * @returns {string[]}
+ */
+function getActorIdsForCombatantIds(combatantIds, combat) {
+	const actorIds = new Set();
+	for (const combatantId of combatantIds) {
+		const combatant = combat?.combatants.get(combatantId);
+		const actorId = combatant?.actorId ?? combatant?.token?.actorId;
+		if (actorId) {
+			actorIds.add(actorId);
+		}
+	}
+
+	return Array.from(actorIds);
+}
+
+/**
+ * Resolve a preset turn pointer's actor ids back to this encounter's matching combatant ids.
+ *
+ * @param {string[]} actorIds
+ * @param {Combat|null} combat
+ * @returns {string[]}
+ */
+function getCombatantIdsForActorIds(actorIds, combat) {
+	return Array.from(combat?.combatants ?? [])
+		.filter((combatant) => actorIds.includes(combatant.actorId ?? combatant.token?.actorId))
+		.map((combatant) => combatant.id);
 }
 
 /**
