@@ -16,12 +16,17 @@ import {
 	registerMarkDisplay,
 	registerMarkDisplaySettings,
 } from "./scripts/mark-display/mark-display.js";
+import {
+	registerCombatStart,
+	registerCombatStartSettings,
+} from "./scripts/combat-start/combat-start.js";
 
 Hooks.once("init", () => {
 	registerHealthDisplaySettings();
 	registerActorDisplaySettings();
 	registerTeamDisplaySettings();
 	registerMarkDisplaySettings();
+	registerCombatStartSettings();
 });
 
 Hooks.once("ready", () => {
@@ -29,4 +34,5 @@ Hooks.once("ready", () => {
 	registerActorDisplay();
 	registerTeamDisplay();
 	registerMarkDisplay();
+	registerCombatStart();
 });

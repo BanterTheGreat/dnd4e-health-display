@@ -1,0 +1,97 @@
+<section class="dnd4e-combat-start{{#unless isGM}} is-player-view{{/unless}}">
+	<nav class="dnd4e-combat-start__tabs" aria-label="Combat Start sections">
+		<button type="button" data-action="showTab" data-tab="briefing" class="{{#if showBriefing}}is-active{{/if}}">
+			<i class="fa-solid fa-shield-halved" aria-hidden="true"></i> Battle Briefing
+		</button>
+		{{#if isGM}}
+			<button type="button" data-action="showTab" data-tab="strategy" class="{{#if showStrategy}}is-active{{/if}}">
+				<i class="fa-solid fa-map" aria-hidden="true"></i> Strategy
+			</button>
+			<button type="button" data-action="hidePresentation" class="dnd4e-combat-start__hide">
+				<i class="fa-solid fa-xmark" aria-hidden="true"></i> Hide from Players
+			</button>
+		{{/if}}
+	</nav>
+
+	{{#if showBriefing}}
+		<div class="dnd4e-combat-start__briefing">
+			<header class="dnd4e-combat-start__encounter-heading">
+					<h1>{{title}}</h1>
+					<p>{{description}}</p>
+			</header>
+			<div class="dnd4e-combat-start__side-headings" aria-hidden="true">
+				<span class="dnd4e-combat-start__eyebrow">On Their Side</span>
+				<span class="dnd4e-combat-start__eyebrow">On Our Side</span>
+			</div>
+
+			<div class="dnd4e-combat-start__briefing-body">
+				<section class="dnd4e-combat-start__threat">
+					{{#if commander}}
+						<article class="dnd4e-combat-start__commander">
+							<img src="{{commander.img}}" alt="">
+							<div class="dnd4e-combat-start__commander-shade"></div>
+							<div class="dnd4e-combat-start__commander-info">
+								<h2>{{commander.name}}</h2>
+								{{#if commanderSubtitle}}
+									<p class="is-custom">{{commanderSubtitle}}</p>
+								{{else if isGM}}
+									<p>Level {{commander.level}} · {{commander.role}}</p>
+								{{else if commander.publicRole}}
+									<p>{{commander.publicRole}}</p>
+								{{/if}}
+								<div class="dnd4e-combat-start__enemy-groups">
+									{{#each enemyGroups}}
+										<article>
+											<img src="{{img}}" alt="">
+											<div>
+												<strong>{{name}}</strong>
+												{{#if @root.isGM}}<small>{{role}}</small>{{else if publicRole}}<small>{{publicRole}}</small>{{/if}}
+											</div>
+											<b>×{{count}}</b>
+										</article>
+									{{/each}}
+								</div>
+							</div>
+						</article>
+					{{else}}
+						<p class="dnd4e-combat-start__empty">No hostile combatants are in this encounter.</p>
+					{{/if}}
+				</section>
+
+				<aside class="dnd4e-combat-start__party">
+				<div class="dnd4e-combat-start__heroes">
+					{{#each party}}
+						<article>
+							<img src="{{img}}" alt="">
+							<div><strong>{{name}}</strong><small>{{#if @root.isGM}}Level {{level}} · {{/if}}{{role}}</small></div>
+							<div class="dnd4e-combat-start__initiative"><small>Initiative</small><b>{{initiative}}</b></div>
+						</article>
+					{{else}}
+						<p class="dnd4e-combat-start__empty">No player-owned combatants are in this encounter.</p>
+					{{/each}}
+				</div>
+				{{#if isGM}}
+					<footer>
+						<button type="button" data-action="startCombat" class="dnd4e-combat-start__start">Start Encounter</button>
+						<small>Rolls initiative for every NPC, then begins combat.</small>
+					</footer>
+				{{else}}
+					<footer>
+						<button type="button" data-action="rollInitiative" class="dnd4e-combat-start__start dnd4e-combat-start__start--player" {{#unless canRollPlayerInitiative}}disabled{{/unless}}>Roll Initiative</button>
+						<small>Rolls initiative for your owned character.</small>
+					</footer>
+				{{/if}}
+				</aside>
+			</div>
+		</div>
+	{{/if}}
+
+	{{#if showStrategy}}
+		<section class="dnd4e-combat-start__strategy">
+			<i class="fa-solid fa-map-location-dot" aria-hidden="true"></i>
+			<span class="dnd4e-combat-start__eyebrow">GM Workspace</span>
+			<h2>Strategy</h2>
+			<p>This placeholder is ready for encounter notes, deployment controls, or hidden objectives.</p>
+		</section>
+	{{/if}}
+</section>

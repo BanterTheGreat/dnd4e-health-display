@@ -1,0 +1,88 @@
+<form class="dnd4e-combat-start-setup__form">
+	<header class="dnd4e-combat-start-setup__heading">
+		<span>Encounter Presentation</span>
+		<h2>{{combatName}}</h2>
+		<p>Prepare the briefing your players will see before initiative begins.</p>
+	</header>
+
+	<div class="dnd4e-combat-start-setup__workspace">
+		<div class="dnd4e-combat-start-setup__editor">
+			<section class="dnd4e-combat-start-setup__presets" aria-label="Saved Combat Start presets">
+				<label for="dnd4e-combat-start-preset">Saved encounter</label>
+				<div class="dnd4e-combat-start-setup__preset-row">
+					<select id="dnd4e-combat-start-preset" name="preset">
+						<option value="">Choose a preset…</option>
+						{{#each presets}}
+							<option value="{{id}}" {{#if selected}}selected{{/if}}>{{name}}</option>
+						{{/each}}
+					</select>
+					<button type="button" data-action="loadPreset" {{#unless hasPresets}}disabled{{/unless}}>Load</button>
+					<button type="button" data-action="deletePreset" class="dnd4e-combat-start-setup__delete" {{#unless hasSelectedPreset}}disabled{{/unless}} title="Delete selected preset">
+						<i class="fa-solid fa-trash" aria-hidden="true"></i>
+					</button>
+				</div>
+			</section>
+
+			<div class="dnd4e-combat-start-setup__fields">
+				<label class="dnd4e-combat-start-setup__wide">
+					<span>Title</span>
+					<input type="text" name="title" value="{{draft.title}}" required>
+				</label>
+				<label class="dnd4e-combat-start-setup__wide">
+					<span>Description</span>
+					<textarea name="description" rows="3">{{draft.description}}</textarea>
+				</label>
+				<label class="dnd4e-combat-start-setup__wide">
+					<span>Commander subtitle</span>
+					<input type="text" name="commanderSubtitle" value="{{draft.commanderSubtitle}}" placeholder="Optional text beneath the commander name">
+				</label>
+			</div>
+
+			<footer class="dnd4e-combat-start-setup__actions">
+				<div class="dnd4e-combat-start-setup__save-group">
+					<label>
+						<span>Preset name</span>
+						<input type="text" name="presetName" value="{{draft.name}}" placeholder="The Ember Gate">
+					</label>
+					<button type="button" data-action="savePreset"><i class="fa-solid fa-bookmark" aria-hidden="true"></i> Save Preset</button>
+				</div>
+				<button type="button" data-action="show" class="dnd4e-combat-start-setup__show"><i class="fa-solid fa-eye" aria-hidden="true"></i> Show to Players</button>
+			</footer>
+		</div>
+
+		<section class="dnd4e-combat-start-setup__roster" aria-label="Current encounter combatants">
+			<div class="dnd4e-combat-start-setup__section-heading">
+				<div>
+					<span>Encounter Roster</span>
+					<h3>Current Combatants</h3>
+				</div>
+				<div class="dnd4e-combat-start-setup__roster-actions">
+					<button type="button" data-action="addFriendlyTokens" {{#unless hasAvailableFriendlyTokens}}disabled{{/unless}}>
+						<i class="fa-solid fa-user-plus" aria-hidden="true"></i> Add Friendly Tokens{{#if availableFriendlyCount}} ({{availableFriendlyCount}}){{/if}}
+					</button>
+					<button type="button" data-action="addNeutralTokens" class="is-neutral" {{#unless hasAvailableNeutralTokens}}disabled{{/unless}}>
+						<i class="fa-solid fa-circle-half-stroke" aria-hidden="true"></i> Add Neutral Tokens{{#if availableNeutralCount}} ({{availableNeutralCount}}){{/if}}
+					</button>
+					<button type="button" data-action="addHostileTokens" class="is-hostile" {{#unless hasAvailableHostileTokens}}disabled{{/unless}}>
+						<i class="fa-solid fa-skull" aria-hidden="true"></i> Add Hostile Tokens{{#if availableHostileCount}} ({{availableHostileCount}}){{/if}}
+					</button>
+				</div>
+			</div>
+			<div class="dnd4e-combat-start-setup__combatants">
+				{{#each combatants}}
+					<article class="{{dispositionClass}} {{#if isCommander}}is-commander{{/if}}">
+						<img src="{{img}}" alt="">
+						<div><strong>{{name}}</strong><small>{{disposition}} · Level {{level}} · {{role}}</small></div>
+						{{#if canBeCommander}}
+							<button type="button" data-action="setCommander" data-combatant-id="{{id}}" class="dnd4e-combat-start-setup__commander-select" aria-pressed="{{isCommander}}" title="Select {{name}} as enemy commander">
+								<i class="fa-solid fa-crown" aria-hidden="true"></i>
+							</button>
+						{{/if}}
+					</article>
+				{{else}}
+					<p>No tokens are currently in this encounter.</p>
+				{{/each}}
+			</div>
+		</section>
+	</div>
+</form>

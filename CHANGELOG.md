@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+Added an independent Combat Start submodule with a GM combat-tracker control, reusable world presets for encounter titles, descriptions, and commander subtitles, synchronized player briefings built from the active combat roster and actor artwork, and a GM-only Strategy placeholder tab. The tracker control creates an encounter for the active scene when needed. Its preparation window shows the current encounter roster in a dedicated side column, can bulk-add all friendly, neutral, or hostile scene tokens, and lets the GM choose which hostile appears as the enemy commander. The player briefing shows current initiative values and lets each player roll initiative for their owned combatant, while the GM action rolls initiative for every NPC, begins the encounter, and dismisses the briefing for all connected users.
+
 NPC attacking powers and feature abilities now open the DnD4e attack-roll dialog from the Actor display instead of posting their item cards directly to chat, consuming limited power uses as normal. NPC powers now also provide separate controls to send their cards to chat or roll their damage, while player-character powers can expand individually to show the same complete rules details used for NPC powers.
 
 Added a live, case-insensitive search field to player-character Powers tabs, filtering cards and their empty categories by power name as the user types.
