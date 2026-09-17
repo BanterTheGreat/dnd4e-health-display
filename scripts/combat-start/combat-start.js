@@ -3,6 +3,8 @@ import { getDefaultStrategy, getStrategy, setStrategy } from "./strategy.js";
 const MODULE_ID = "dnd4e-health-display";
 const PRESETS_SETTING = "combatStartPresets";
 const ACTIVE_SETTING = "activeCombatStart";
+const PRESENTATION_FLAG = "presentation";
+const INITIATIVE_TRACKER_PLACEMENT_SETTING = "combatStartInitiativeTrackerPlacement";
 const SETUP_TEMPLATE = `modules/${MODULE_ID}/scripts/combat-start/combat-start-setup.hbs`;
 const DISPLAY_TEMPLATE = `modules/${MODULE_ID}/scripts/combat-start/combat-start-display.hbs`;
 
@@ -26,6 +28,20 @@ export function registerCombatStartSettings() {
 		default: {},
 		onChange: synchronizeCombatStartDisplay,
 	});
+
+	game.settings.register(MODULE_ID, INITIATIVE_TRACKER_PLACEMENT_SETTING, {
+		name: "Battle Briefing initiative tracker placement",
+		hint: "Place the shared initiative tracker at the bottom or side of the Battle Briefing.",
+		scope: "world",
+		config: true,
+		type: String,
+		choices: {
+			bottom: "Bottom of Battle Briefing",
+			side: "Side of Battle Briefing",
+		},
+		default: "bottom",
+		onChange: () => ui.Dnd4eCombatStartDisplay?.render(),
+	});
 }
 
 /** Register combat-tracker controls and the shared presentation lifecycle. */
@@ -34,6 +50,7 @@ export function registerCombatStart() {
 	Hooks.on("createCombatant", refreshCombatStartDisplay);
 	Hooks.on("updateCombatant", refreshCombatStartDisplay);
 	Hooks.on("deleteCombatant", refreshCombatStartDisplay);
+	Hooks.on("updateCombat", refreshCombatStartDisplayForCombat);
 	Hooks.on("deleteCombat", closeDeletedCombatDisplay);
 
 	synchronizeCombatStartDisplay(game.settings.get(MODULE_ID, ACTIVE_SETTING));
@@ -59,8 +76,74 @@ function addCombatStartButton(app, element) {
 	button.dataset.dnd4eCombatStart = "";
 	button.title = "Prepare a Battle Briefing presentation";
 	button.innerHTML = '<i class="fa-solid fa-swords" aria-hidden="true"></i><span>Battle Briefing</span>';
-	button.addEventListener("click", () => void openCombatStartSetup(app.viewed ?? game.combat));
+	button.addEventListener("click", () => void openBattleBriefing(app.viewed ?? game.combat));
 	header.append(button);
+}
+
+/** Open the setup window, or jump straight to the live briefing if the encounter already started. */
+async function openBattleBriefing(combat) {
+	if (combat?.started) {
+		await openStartedCombatDisplay(combat);
+		return;
+	}
+
+	await openCombatStartSetup(combat);
+}
+
+/** Show the live briefing for an encounter already in progress, skipping the setup dialog. */
+async function openStartedCombatDisplay(combat) {
+	const active = game.settings.get(MODULE_ID, ACTIVE_SETTING);
+	if (active?.id && active.combatId === combat.id) {
+		ui.Dnd4eCombatStartDisplay?.render(true);
+		return;
+	}
+
+	if (!getCombatPresentation(combat)) {
+		await setCombatPresentation(combat, {
+			commanderCombatantId: "",
+			...getDefaultPresentation(),
+			title: combat.name || getDefaultPresentation().title,
+		});
+	}
+
+	await game.settings.set(MODULE_ID, ACTIVE_SETTING, {
+		id: foundry.utils.randomID(),
+		combatId: combat.id,
+	});
+}
+
+/**
+ * Read the persisted Battle Briefing content stored on the encounter itself, so it survives
+ * hiding the presentation, closing windows, or the encounter starting.
+ *
+ * @param {Combat|null} combat
+ * @returns {object|null}
+ */
+function getCombatPresentation(combat) {
+	return combat?.getFlag(MODULE_ID, PRESENTATION_FLAG) ?? null;
+}
+
+/** @param {Combat} combat @param {object} presentation */
+async function setCombatPresentation(combat, presentation) {
+	await combat.setFlag(MODULE_ID, PRESENTATION_FLAG, presentation);
+}
+
+/** @param {object|null} presentation @returns {object} */
+function mapPresentationToDraft(presentation) {
+	const defaults = getDefaultPresentation();
+	if (!presentation) {
+		return defaults;
+	}
+
+	return {
+		name: "",
+		title: presentation.title ?? defaults.title,
+		description: presentation.description ?? defaults.description,
+		commanderSubtitle: presentation.commanderSubtitle ?? defaults.commanderSubtitle,
+		commanderPositionX: presentation.commanderPositionX ?? defaults.commanderPositionX,
+		commanderPositionY: presentation.commanderPositionY ?? defaults.commanderPositionY,
+		commanderZoom: presentation.commanderZoom ?? defaults.commanderZoom,
+	};
 }
 
 /** Open the GM setup window for the currently viewed encounter. */
@@ -119,6 +202,13 @@ function refreshCombatStartDisplay(combatant) {
 	}
 }
 
+/** Refresh the presentation when its encounter advances to another turn. */
+function refreshCombatStartDisplayForCombat(combat) {
+	if (ui.Dnd4eCombatStartDisplay?.combatId === combat.id) {
+		ui.Dnd4eCombatStartDisplay.render();
+	}
+}
+
 /** Clear a presentation whose encounter was deleted. */
 function closeDeletedCombatDisplay(combat) {
 	if (ui.Dnd4eCombatStartDisplay?.combatId !== combat.id) {
@@ -144,9 +234,10 @@ class CombatStartSetup extends HandlebarsApplicationMixin(ApplicationV2) {
 		super(options);
 		this.combat = combat;
 		this.selectedPresetId = "";
-		this.commanderCombatantId = "";
+		const presentation = getCombatPresentation(combat);
+		this.commanderCombatantId = presentation?.commanderCombatantId ?? "";
 		this.activeTab = "briefing";
-		this.draft = getDefaultPresentation();
+		this.draft = mapPresentationToDraft(presentation);
 		this.strategyDraft = foundry.utils.deepClone(getStrategy(combat));
 	}
 
@@ -165,6 +256,7 @@ class CombatStartSetup extends HandlebarsApplicationMixin(ApplicationV2) {
 			addHostileTokens: CombatStartSetup.prototype.onAddHostileTokens,
 			setCommander: CombatStartSetup.prototype.onSetCommander,
 			toggleCombatantHidden: CombatStartSetup.prototype.onToggleCombatantHidden,
+			removeCombatant: CombatStartSetup.prototype.onRemoveCombatant,
 			showTab: CombatStartSetup.prototype.onShowTab,
 			addStrategyPointer: CombatStartSetup.prototype.onAddStrategyPointer,
 			removeStrategyPointer: CombatStartSetup.prototype.onRemoveStrategyPointer,
@@ -187,8 +279,9 @@ class CombatStartSetup extends HandlebarsApplicationMixin(ApplicationV2) {
 
 		this.combat = combat;
 		this.selectedPresetId = "";
-		this.commanderCombatantId = "";
-		this.draft = getDefaultPresentation();
+		const presentation = getCombatPresentation(combat);
+		this.commanderCombatantId = presentation?.commanderCombatantId ?? "";
+		this.draft = mapPresentationToDraft(presentation);
 		this.strategyDraft = foundry.utils.deepClone(getStrategy(combat));
 	}
 
@@ -207,8 +300,7 @@ class CombatStartSetup extends HandlebarsApplicationMixin(ApplicationV2) {
 			...getCombatantData(combatant),
 			dispositionClass: getDispositionClass(combatant.token?.disposition),
 			isHidden: isCombatantHidden(combatant),
-			canBeCommander: combatant.token?.disposition === CONST.TOKEN_DISPOSITIONS.HOSTILE
-				&& !isCombatantHidden(combatant),
+			canBeCommander: combatant.token?.disposition === CONST.TOKEN_DISPOSITIONS.HOSTILE,
 			isCommander: combatant.id === this.commanderCombatantId,
 		}));
 		const availableFriendlyTokens = getAvailableSceneTokens(this.combat, CONST.TOKEN_DISPOSITIONS.FRIENDLY);
@@ -216,15 +308,17 @@ class CombatStartSetup extends HandlebarsApplicationMixin(ApplicationV2) {
 		const availableHostileTokens = getAvailableSceneTokens(this.combat, CONST.TOKEN_DISPOSITIONS.HOSTILE);
 		const selectedPreset = presets.find((preset) => preset.id === this.selectedPresetId);
 		const missingCombatants = getMissingCombatants(selectedPreset?.expectedCombatants, this.combat);
+		const enemyTypeGroups = getEnemyTypeGroups(this.combat);
 		const strategyPointers = this.strategyDraft.pointers.map((pointer) => ({
 			id: pointer.id,
 			notes: pointer.notes,
-			tokenOptions: combatants.map((combatant) => ({
-				id: combatant.id,
-				name: combatant.name,
-				img: combatant.img,
-				dispositionClass: combatant.dispositionClass,
-				checked: pointer.combatantIds.includes(combatant.id),
+			tokenOptions: enemyTypeGroups.map((group) => ({
+				id: group.id,
+				name: group.name,
+				img: group.img,
+				dispositionClass: group.dispositionClass,
+				memberIds: group.memberIds.join(","),
+				checked: group.memberIds.every((memberId) => pointer.combatantIds.includes(memberId)),
 			})),
 		}));
 		return foundry.utils.mergeObject(context, {
@@ -268,9 +362,22 @@ class CombatStartSetup extends HandlebarsApplicationMixin(ApplicationV2) {
 		this.render();
 	}
 
+	/** Remember the roster's scroll position across re-renders triggered by roster buttons. */
+	async render(options) {
+		const roster = this.element?.querySelector(".dnd4e-combat-start-setup__combatants");
+		if (roster) {
+			this._rosterScrollTop = roster.scrollTop;
+		}
+		return super.render(options);
+	}
+
 	/** Keep the commander artwork preview synchronized with its focus and zoom sliders. */
 	_onRender(context, options) {
 		super._onRender(context, options);
+		const roster = this.element.querySelector(".dnd4e-combat-start-setup__combatants");
+		if (roster && this._rosterScrollTop != null) {
+			roster.scrollTop = this._rosterScrollTop;
+		}
 		const preview = this.element.querySelector(".dnd4e-combat-start-setup__art-preview img");
 		const horizontal = this.element.querySelector('[name="commanderPositionX"]');
 		const vertical = this.element.querySelector('[name="commanderPositionY"]');
@@ -321,7 +428,7 @@ class CombatStartSetup extends HandlebarsApplicationMixin(ApplicationV2) {
 			const checkboxes = this.element.querySelectorAll(`input[type="checkbox"][data-pointer-id="${pointer.id}"]`);
 			const combatantIds = Array.from(checkboxes)
 				.filter((checkbox) => checkbox.checked)
-				.map((checkbox) => checkbox.dataset.tokenId);
+				.flatMap((checkbox) => checkbox.dataset.tokenIds.split(","));
 			return { id: pointer.id, notes, combatantIds };
 		});
 		this.strategyDraft = { environment, pointers };
@@ -501,6 +608,30 @@ class CombatStartSetup extends HandlebarsApplicationMixin(ApplicationV2) {
 		}
 	}
 
+	/** Remove a combatant from the encounter without deleting its scene token. */
+	async onRemoveCombatant(event, target) {
+		this.readDraft();
+		const combatantId = target.dataset.combatantId;
+		const combatant = this.combat?.combatants.get(combatantId);
+		if (!combatant) {
+			return;
+		}
+
+		target.disabled = true;
+		try {
+			await this.combat.deleteEmbeddedDocuments("Combatant", [combatantId]);
+			this.strategyDraft.pointers = this.strategyDraft.pointers.map((pointer) => ({
+				...pointer,
+				combatantIds: pointer.combatantIds.filter((id) => id !== combatantId),
+			}));
+			this.render();
+		} catch (error) {
+			console.error(`${MODULE_ID} | Failed to remove combatant from combat.`, error);
+			ui.notifications.error("The combatant could not be removed. Check the console for details.");
+			target.disabled = false;
+		}
+	}
+
 	/**
 	 * Add all scene tokens of one disposition which are not already combatants.
 	 *
@@ -533,7 +664,7 @@ class CombatStartSetup extends HandlebarsApplicationMixin(ApplicationV2) {
 		}
 	}
 
-	/** Synchronize the presentation to every connected user. */
+	/** Save the presentation to the encounter and synchronize it to every connected user. */
 	async onShow() {
 		const draft = this.readDraft();
 		if (!draft.title) {
@@ -541,9 +672,7 @@ class CombatStartSetup extends HandlebarsApplicationMixin(ApplicationV2) {
 			return;
 		}
 
-		await game.settings.set(MODULE_ID, ACTIVE_SETTING, {
-			id: foundry.utils.randomID(),
-			combatId: this.combat.id,
+		await setCombatPresentation(this.combat, {
 			commanderCombatantId: this.commanderCombatantId,
 			title: draft.title,
 			description: draft.description,
@@ -551,6 +680,10 @@ class CombatStartSetup extends HandlebarsApplicationMixin(ApplicationV2) {
 			commanderPositionX: draft.commanderPositionX,
 			commanderPositionY: draft.commanderPositionY,
 			commanderZoom: draft.commanderZoom,
+		});
+		await game.settings.set(MODULE_ID, ACTIVE_SETTING, {
+			id: foundry.utils.randomID(),
+			combatId: this.combat.id,
 		});
 		await this.close();
 	}
@@ -572,12 +705,14 @@ class CombatStartDisplay extends HandlebarsApplicationMixin(ApplicationV2) {
 	static DEFAULT_OPTIONS = {
 		id: "dnd4e-combat-start-display",
 		classes: ["dnd4e-combat-start-display"],
-		position: { width: 1040, height: 720 },
+		position: { width: 1040, height: 800 },
 		window: { title: "Battle Briefing", resizable: true },
 		actions: {
 			showTab: CombatStartDisplay.prototype.onShowTab,
 			startCombat: CombatStartDisplay.prototype.onStartCombat,
+			rollEnemyInitiative: CombatStartDisplay.prototype.onRollEnemyInitiative,
 			rollInitiative: CombatStartDisplay.prototype.onRollInitiative,
+			forceRollInitiative: CombatStartDisplay.prototype.onForceRollInitiative,
 			hidePresentation: CombatStartDisplay.prototype.onHidePresentation,
 		},
 	};
@@ -600,27 +735,70 @@ class CombatStartDisplay extends HandlebarsApplicationMixin(ApplicationV2) {
 	async _prepareContext(options) {
 		const context = await super._prepareContext(options);
 		const combat = game.combats.get(this.combatId);
-		const roster = getCombatStartRoster(combat, this.presentation.commanderCombatantId);
+		const presentation = getCombatPresentation(combat) ?? getDefaultPresentation();
+		const roster = getCombatStartRoster(combat, presentation.commanderCombatantId);
+		const initiativeTracker = getInitiativeTracker(combat, game.user.isGM);
 		const canRollPlayerInitiative = !game.user.isGM && combat?.combatants.some((combatant) => !isCombatantHidden(combatant)
 			&& combatant.actor?.hasPlayerOwner
 			&& combatant.isOwner
 			&& combatant.initiative == null);
 		return foundry.utils.mergeObject(context, {
-			...this.presentation,
+			...presentation,
 			...roster,
-			commanderScale: Number(this.presentation.commanderZoom ?? 100) / 100,
+			commanderScale: Number(presentation.commanderZoom ?? 100) / 100,
 			isGM: game.user.isGM,
+			combatStarted: Boolean(combat?.started),
 			canRollPlayerInitiative,
+			initiativeTracker,
+			initiativeTrackerPlacement: game.settings.get(MODULE_ID, INITIATIVE_TRACKER_PLACEMENT_SETTING),
 			showBriefing: this.activeTab === "briefing",
 			showStrategy: game.user.isGM && this.activeTab === "strategy",
 		});
 	}
 
-	/** Initialize enlarged portrait previews after each render. */
+	/** Remember the party list's scroll position across re-renders triggered by roster buttons. */
+	async render(options) {
+		const heroes = this.element?.querySelector(".dnd4e-combat-start__heroes");
+		if (heroes) {
+			this._heroesScrollTop = heroes.scrollTop;
+		}
+		return super.render(options);
+	}
+
+	/** Initialize enlarged portrait previews and editable initiative fields after each render. */
 	_onRender(context, options) {
 		super._onRender(context, options);
 		removePortraitPreview();
 		initializePortraitPreviews(this.element);
+		const heroes = this.element.querySelector(".dnd4e-combat-start__heroes");
+		if (heroes && this._heroesScrollTop != null) {
+			heroes.scrollTop = this._heroesScrollTop;
+		}
+		for (const input of this.element.querySelectorAll(".dnd4e-combat-start__initiative-input")) {
+			input.addEventListener("change", () => this.onEditInitiative(input));
+		}
+	}
+
+	/** Let the GM manually set or clear a PC's initiative. */
+	async onEditInitiative(input) {
+		const combat = game.combats.get(this.combatId);
+		const combatant = combat?.combatants.get(input.dataset.combatantId);
+		if (!combatant) {
+			return;
+		}
+
+		const value = input.value.trim();
+		try {
+			if (value === "") {
+				await combatant.update({ initiative: null });
+			} else {
+				await combat.setInitiative(combatant.id, Number(value));
+			}
+			this.render();
+		} catch (error) {
+			console.error(`${MODULE_ID} | Failed to set initiative.`, error);
+			ui.notifications.error("Initiative could not be set. Check the console for details.");
+		}
 	}
 
 	/** Switch the visible presentation tab. */
@@ -634,7 +812,7 @@ class CombatStartDisplay extends HandlebarsApplicationMixin(ApplicationV2) {
 		this.render();
 	}
 
-	/** Roll every NPC, start the encounter, and dismiss the screen for everyone. */
+	/** Roll every NPC and start the encounter. */
 	async onStartCombat(event, target) {
 		if (!game.user.isGM) {
 			return;
@@ -649,19 +827,39 @@ class CombatStartDisplay extends HandlebarsApplicationMixin(ApplicationV2) {
 		}
 
 		try {
-			const npcIds = combat.combatants
-				.filter((combatant) => combatant.actor && !combatant.actor.hasPlayerOwner)
-				.map((combatant) => combatant.id);
-			if (npcIds.length) {
-				await combat.rollInitiative(npcIds);
-			}
 			if (!combat.started) {
 				await combat.startCombat();
 			}
-			await game.settings.set(MODULE_ID, ACTIVE_SETTING, {});
+			this.render();
 		} catch (error) {
 			console.error(`${MODULE_ID} | Failed to start prepared encounter.`, error);
 			ui.notifications.error("The encounter could not be started. Check the console for details.");
+			target.disabled = false;
+		}
+	}
+
+	/** Roll initiative for every NPC without starting the encounter. */
+	async onRollEnemyInitiative(event, target) {
+		if (!game.user.isGM) {
+			return;
+		}
+
+		const combat = game.combats.get(this.combatId);
+		const npcIds = combat?.combatants
+			.filter((combatant) => combatant.actor && !combatant.actor.hasPlayerOwner)
+			.map((combatant) => combatant.id) ?? [];
+		if (!npcIds.length) {
+			ui.notifications.info("There are no NPC combatants to roll initiative for.");
+			return;
+		}
+
+		target.disabled = true;
+		try {
+			await combat.rollInitiative(npcIds);
+			this.render();
+		} catch (error) {
+			console.error(`${MODULE_ID} | Failed to roll enemy initiative.`, error);
+			ui.notifications.error("Enemy initiative could not be rolled. Check the console for details.");
 			target.disabled = false;
 		}
 	}
@@ -692,6 +890,29 @@ class CombatStartDisplay extends HandlebarsApplicationMixin(ApplicationV2) {
 			console.error(`${MODULE_ID} | Failed to roll player initiative.`, error);
 			ui.notifications.error("Initiative could not be rolled. Check the console for details.");
 		} finally {
+			target.disabled = false;
+		}
+	}
+
+	/** GM forces one player combatant to roll initiative. */
+	async onForceRollInitiative(event, target) {
+		if (!game.user.isGM) {
+			return;
+		}
+
+		const combat = game.combats.get(this.combatId);
+		const combatantId = target.dataset.combatantId;
+		if (!combat?.combatants.has(combatantId)) {
+			return;
+		}
+
+		target.disabled = true;
+		try {
+			await combat.rollInitiative([combatantId]);
+			this.render();
+		} catch (error) {
+			console.error(`${MODULE_ID} | Failed to force initiative roll.`, error);
+			ui.notifications.error("Initiative could not be rolled. Check the console for details.");
 			target.disabled = false;
 		}
 	}
@@ -863,9 +1084,15 @@ function getCombatStartRoster(combat, commanderCombatantId = "") {
 		: [];
 	const party = combatants
 		.filter((combatant) => combatant.actor?.hasPlayerOwner)
-		.map(getCombatantData);
+		.map((combatant) => ({
+			...getCombatantData(combatant),
+			rawInitiative: combatant.initiative == null ? "" : Math.round(combatant.initiative),
+			hasInitiative: combatant.initiative != null,
+		}));
 	const enemies = combatants
-		.filter((combatant) => combatant.actor && !combatant.actor.hasPlayerOwner)
+		.filter((combatant) => combatant.actor
+			&& !combatant.actor.hasPlayerOwner
+			&& combatant.token?.disposition === CONST.TOKEN_DISPOSITIONS.HOSTILE)
 		.sort((left, right) => getActorLevel(right.actor) - getActorLevel(left.actor));
 	const preferredCommanderIndex = enemies.findIndex((combatant) => combatant.id === commanderCombatantId);
 	const [commander] = enemies.splice(preferredCommanderIndex >= 0 ? preferredCommanderIndex : 0, 1);
@@ -894,6 +1121,67 @@ function getCombatStartRoster(combat, commanderCombatantId = "") {
 		commander: commander ? getCombatantData(commander) : null,
 		enemyGroups,
 	};
+}
+
+/**
+ * Build the initiative order shown in the shared Battle Briefing.
+ *
+ * Combatants hidden by the GM remain excluded so the player-facing briefing
+ * does not reveal concealed enemies. Pins are placed by Foundry's own turn
+ * order (`combat.turns`) rather than by raw initiative value, since that is
+ * the authoritative, unambiguous order — including however the system
+ * breaks ties — and avoids stacking multiple pins on top of each other.
+ *
+ * @param {Combat|null} combat
+ * @returns {{rolled: Array<object>, unrolled: Array<object>, hasRolled: boolean}}
+ */
+function getInitiativeTracker(combat, isGM = false) {
+	const entries = Array.from(combat?.turns ?? combat?.combatants ?? [])
+		.filter((combatant) => isGM || !isCombatantHidden(combatant))
+		.map((combatant) => ({
+			...getCombatantData(combatant),
+			rawInitiative: combatant.initiative,
+			isCurrent: combat?.combatant?.id === combatant.id,
+			isPlayer: Boolean(combatant.actor?.hasPlayerOwner),
+			dispositionClass: getDispositionClass(combatant.token?.disposition),
+			isHidden: isCombatantHidden(combatant),
+		}));
+
+	const rolled = entries.filter((entry) => entry.rawInitiative != null);
+	const unrolled = entries.filter((entry) => entry.rawInitiative == null);
+	rolled.forEach((entry, index) => {
+		entry.position = rolled.length > 1 ? Math.round((index / (rolled.length - 1)) * 100) : 50;
+	});
+
+	return { rolled, unrolled, hasRolled: rolled.length > 0 };
+}
+
+/**
+ * Group non-player combatants by actor, since tactics notes apply to an enemy type rather than one token.
+ *
+ * @param {Combat|null} combat
+ * @returns {Array<{id: string, name: string, img: string, dispositionClass: string, memberIds: string[]}>}
+ */
+function getEnemyTypeGroups(combat) {
+	const groups = new Map();
+	for (const combatant of combat?.combatants ?? []) {
+		if (!combatant.actor || combatant.actor.hasPlayerOwner) {
+			continue;
+		}
+
+		const key = combatant.actorId ?? combatant.token?.actorId ?? combatant.id;
+		const group = groups.get(key) ?? {
+			id: key,
+			name: combatant.name,
+			img: getCombatantData(combatant).img,
+			dispositionClass: getDispositionClass(combatant.token?.disposition),
+			memberIds: [],
+		};
+		group.memberIds.push(combatant.id);
+		groups.set(key, group);
+	}
+
+	return Array.from(groups.values());
 }
 
 /** @param {Combatant} combatant @returns {object} */

@@ -14,7 +14,7 @@
 	</nav>
 
 	{{#if showBriefing}}
-		<div class="dnd4e-combat-start__briefing">
+		<div class="dnd4e-combat-start__briefing is-initiative-{{initiativeTrackerPlacement}}">
 			<header class="dnd4e-combat-start__encounter-heading">
 					<h1>{{title}}</h1>
 					<p>{{description}}</p>
@@ -64,16 +64,30 @@
 						<article>
 							<img src="{{img}}" alt="" tabindex="0" aria-label="Preview {{name}} artwork" data-combat-start-portrait data-portrait-name="{{name}}">
 							<div><strong>{{name}}</strong><small>{{#if @root.isGM}}Level {{level}} · {{/if}}{{role}}</small></div>
-							<div class="dnd4e-combat-start__initiative"><small>Initiative</small><b>{{initiative}}</b></div>
+							<div class="dnd4e-combat-start__initiative">
+								<small>Initiative</small>
+								{{#if @root.isGM}}
+									{{#if hasInitiative}}
+										<input type="number" class="dnd4e-combat-start__initiative-input" data-combatant-id="{{id}}" value="{{rawInitiative}}" placeholder="—">
+									{{else}}
+										<button type="button" data-action="forceRollInitiative" data-combatant-id="{{id}}" class="dnd4e-combat-start__initiative-roll" title="Roll initiative for {{name}}">??</button>
+									{{/if}}
+								{{else}}
+									<b>{{initiative}}</b>
+								{{/if}}
+							</div>
 						</article>
 					{{else}}
 						<p class="dnd4e-combat-start__empty">No player-owned combatants are in this encounter.</p>
 					{{/each}}
 				</div>
-				{{#if isGM}}
+				{{#if combatStarted}}
+					<footer class="dnd4e-combat-start__combat-live"><i class="fa-solid fa-swords" aria-hidden="true"></i> Encounter in progress</footer>
+				{{else if isGM}}
 					<footer>
+						<button type="button" data-action="rollEnemyInitiative" class="dnd4e-combat-start__start dnd4e-combat-start__start--secondary">Roll Enemy Initiative</button>
 						<button type="button" data-action="startCombat" class="dnd4e-combat-start__start">Start Encounter</button>
-						<small>Rolls initiative for every NPC, then begins combat.</small>
+						<small>Begins combat with the current initiative order.</small>
 					</footer>
 				{{else}}
 					<footer>
@@ -83,6 +97,34 @@
 				{{/if}}
 				</aside>
 			</div>
+
+			<section class="dnd4e-combat-start__initiative-tracker" aria-label="Initiative order">
+				<header><i class="fa-solid fa-list-ol" aria-hidden="true"></i><span>Initiative Order</span></header>
+				{{#if initiativeTracker.hasRolled}}
+					<div class="dnd4e-combat-start__initiative-line">
+						<div class="dnd4e-combat-start__initiative-track">
+							{{#each initiativeTracker.rolled}}
+								<div class="dnd4e-combat-start__initiative-pin {{dispositionClass}} {{#if isCurrent}}is-current{{/if}} {{#if isHidden}}is-hidden{{/if}}" style="--pos: {{position}}">
+									<img src="{{img}}" alt="" tabindex="0" aria-label="Preview {{name}} artwork" data-combat-start-portrait data-portrait-name="{{name}} — Init {{initiative}}">
+									{{#if isHidden}}<i class="fa-solid fa-eye-slash" aria-hidden="true"></i>{{/if}}
+								</div>
+							{{/each}}
+						</div>
+					</div>
+				{{else}}
+					<p class="dnd4e-combat-start__empty">Initiative has not been rolled yet.</p>
+				{{/if}}
+				{{#if initiativeTracker.unrolled.length}}
+					<div class="dnd4e-combat-start__initiative-unrolled">
+						<small>Not yet rolled</small>
+						<div class="dnd4e-combat-start__initiative-unrolled-pins">
+							{{#each initiativeTracker.unrolled}}
+								<img src="{{img}}" alt="" tabindex="0" aria-label="Preview {{name}} artwork" class="{{#if isHidden}}is-hidden{{/if}}" data-combat-start-portrait data-portrait-name="{{name}} — not rolled">
+							{{/each}}
+						</div>
+					</div>
+				{{/if}}
+			</section>
 		</div>
 	{{/if}}
 

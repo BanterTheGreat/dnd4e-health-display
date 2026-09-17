@@ -112,7 +112,7 @@
 
 .dnd4e-combat-start-setup__workspace {
 	display: grid;
-	grid-template-columns: minmax(0, 1fr) 20rem;
+	grid-template-columns: minmax(0, 1fr) 26rem;
 	height: auto;
 	min-height: 0;
 	overflow: hidden;
@@ -226,7 +226,7 @@
 
 .dnd4e-combat-start-setup__combatants article {
 	display: grid;
-	grid-template-columns: 2.25rem minmax(0, 1fr) auto auto;
+	grid-template-columns: 2.25rem minmax(0, 1fr) auto auto auto;
 	align-items: center;
 	gap: 0.5rem;
 	min-width: 0;
@@ -454,7 +454,8 @@
 }
 
 .dnd4e-combat-start-setup__commander-select,
-.dnd4e-combat-start-setup__visibility-toggle {
+.dnd4e-combat-start-setup__visibility-toggle,
+.dnd4e-combat-start-setup__remove-combatant {
 	display: grid;
 	place-items: center;
 	width: 1.8rem;
@@ -491,6 +492,18 @@
 	background: #49351f;
 	color: #f2c878;
 	box-shadow: 0 0 0.4rem rgb(200 145 70 / 30%);
+}
+
+.dnd4e-combat-start-setup__remove-combatant {
+	border-color: #654441;
+	background: #291b1b;
+	color: #c9857d;
+}
+
+.dnd4e-combat-start-setup__remove-combatant:hover {
+	border-color: #bd6258;
+	background: #3b201e;
+	color: #f0aaa0;
 }
 
 .dnd4e-combat-start-setup__combatants small {
@@ -790,14 +803,178 @@
 
 .dnd4e-combat-start__briefing {
 	display: grid;
-	grid-template-rows: auto auto minmax(0, 1fr);
+	grid-template-rows: auto auto minmax(0, 1fr) auto;
 	min-height: 0;
+}
+
+.dnd4e-combat-start__briefing.is-initiative-side {
+	grid-template-columns: minmax(0, 1fr) 11.5rem;
+	grid-template-rows: auto auto minmax(0, 1fr);
+}
+
+.dnd4e-combat-start__briefing.is-initiative-side > .dnd4e-combat-start__encounter-heading,
+.dnd4e-combat-start__briefing.is-initiative-side > .dnd4e-combat-start__side-headings {
+	grid-column: 1 / -1;
 }
 
 .dnd4e-combat-start__briefing-body {
 	display: grid;
 	grid-template-columns: minmax(0, 1.55fr) minmax(18rem, 0.7fr);
 	min-height: 0;
+}
+
+.dnd4e-combat-start__initiative-tracker {
+	display: grid;
+	grid-template-rows: auto minmax(0, 1fr) auto;
+	gap: 0.5rem;
+	min-height: 0;
+	padding: 0.5rem 0.9rem 0.6rem;
+	border-top: 1px solid #4b3828;
+	background: linear-gradient(#111217, #0c0d10);
+}
+
+.dnd4e-combat-start__initiative-tracker header {
+	display: flex;
+	align-items: center;
+	gap: 0.4rem;
+	color: #c79b59;
+	font-size: 0.6rem;
+	font-weight: 800;
+	letter-spacing: 0.13em;
+	text-transform: uppercase;
+}
+
+.dnd4e-combat-start__initiative-line {
+	--pin-size: 2.1rem;
+	display: flex;
+	align-items: center;
+	gap: 0.8rem;
+	min-height: 6.4rem;
+}
+
+.dnd4e-combat-start__initiative-track {
+	position: relative;
+	flex: 1 1 auto;
+	height: 2px;
+	margin: 3rem 0;
+	border-radius: 1px;
+	background: linear-gradient(90deg, #423a36, #79262d, #423a36);
+}
+
+.dnd4e-combat-start__initiative-pin {
+	position: absolute;
+	top: 50%;
+	left: calc(var(--pin-size) / 2 + (100% - var(--pin-size)) * var(--pos, 50) / 100);
+	transform: translate(-50%, -50%);
+}
+
+.dnd4e-combat-start__initiative-pin img {
+	display: block;
+	width: 2.1rem;
+	height: 2.1rem;
+	border: 2px solid #a64a43;
+	border-radius: 50%;
+	background: #0c0d10;
+	object-fit: cover;
+	cursor: pointer;
+}
+
+.dnd4e-combat-start__initiative-pin.is-friendly img {
+	border-color: #5d829d;
+}
+
+.dnd4e-combat-start__initiative-pin.is-neutral img {
+	border-color: #e0c68f;
+}
+
+.dnd4e-combat-start__initiative-pin.is-hidden img {
+	border-style: dashed;
+	opacity: 0.65;
+}
+
+.dnd4e-combat-start__initiative-pin.is-hidden i {
+	position: absolute;
+	right: -0.15rem;
+	bottom: -0.15rem;
+	color: #a64a43;
+	font-size: 0.6rem;
+	text-shadow: 0 0 0.2rem #0c0d10;
+}
+
+.dnd4e-combat-start__initiative-pin.is-current img {
+	border-color: #e4b96f;
+	box-shadow: 0 0 0 3px rgb(228 185 111 / 30%);
+}
+
+.dnd4e-combat-start__initiative-unrolled {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.dnd4e-combat-start__initiative-unrolled small {
+	flex: 0 0 auto;
+	color: #7e776e;
+	font-size: 0.62rem;
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+}
+
+.dnd4e-combat-start__initiative-unrolled-pins {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.3rem;
+}
+
+.dnd4e-combat-start__initiative-unrolled-pins img {
+	width: 1.6rem;
+	height: 1.6rem;
+	border: 1px solid #423a36;
+	border-radius: 50%;
+	object-fit: cover;
+	cursor: pointer;
+}
+
+.dnd4e-combat-start__initiative-unrolled-pins img.is-hidden {
+	border-style: dashed;
+	opacity: 0.65;
+}
+
+.dnd4e-combat-start__briefing.is-initiative-side .dnd4e-combat-start__briefing-body {
+	grid-column: 1;
+}
+
+.dnd4e-combat-start__briefing.is-initiative-side .dnd4e-combat-start__initiative-tracker {
+	grid-column: 2;
+	grid-row: 3;
+	grid-template-rows: auto minmax(0, 1fr) auto;
+	border-top: 0;
+	border-left: 1px solid #6b4f34;
+}
+
+.dnd4e-combat-start__briefing.is-initiative-side .dnd4e-combat-start__initiative-line {
+	flex-direction: column;
+	flex: 1 1 auto;
+	min-height: 0;
+}
+
+.dnd4e-combat-start__briefing.is-initiative-side .dnd4e-combat-start__initiative-track {
+	width: 2px;
+	height: auto;
+	flex: 1 1 auto;
+	margin: 3rem 0;
+	background: linear-gradient(180deg, #423a36, #79262d, #423a36);
+}
+
+.dnd4e-combat-start__briefing.is-initiative-side .dnd4e-combat-start__initiative-pin {
+	top: calc(var(--pin-size) / 2 + (100% - var(--pin-size)) * var(--pos, 50) / 100);
+	left: 50%;
+	transform: translate(-50%, -50%);
+}
+
+.dnd4e-combat-start__briefing.is-initiative-side .dnd4e-combat-start__initiative-unrolled {
+	flex-direction: column;
+	align-items: flex-start;
 }
 
 .dnd4e-combat-start__encounter-heading {
@@ -893,7 +1070,7 @@
 .dnd4e-combat-start__commander-shade {
 	position: absolute;
 	inset: 0;
-	background: linear-gradient(transparent 18%, rgb(7 8 11 / 15%) 42%, rgb(7 8 11 / 96%) 73%);
+	background: linear-gradient(transparent 30%, rgb(7 8 11 / 15%) 55%, rgb(7 8 11 / 72%) 85%);
 }
 
 .dnd4e-combat-start__commander-info {
@@ -1089,6 +1266,7 @@
 }
 
 .dnd4e-combat-start__initiative {
+	position: relative;
 	display: grid;
 	min-width: 3.3rem;
 	justify-items: end;
@@ -1111,27 +1289,84 @@
 	line-height: 1;
 }
 
+.dnd4e-combat-start__initiative-input {
+	width: 2.4rem;
+	padding: 0 0.1rem;
+	border: 0;
+	border-bottom: 1px solid rgb(139 116 80 / 35%);
+	background: transparent;
+	color: #e5c580;
+	font-family: var(--font-h1, "Modesto Condensed", serif);
+	font-size: 1.35rem;
+	line-height: 1;
+	text-align: right;
+	appearance: textfield;
+	-moz-appearance: textfield;
+}
+
+.dnd4e-combat-start__initiative-input::-webkit-outer-spin-button,
+.dnd4e-combat-start__initiative-input::-webkit-inner-spin-button {
+	appearance: none;
+	-webkit-appearance: none;
+	margin: 0;
+}
+
+.dnd4e-combat-start__initiative-input:focus {
+	border-bottom-color: #e4b96f;
+	outline: none;
+	box-shadow: 0 1px 0 0 #e4b96f;
+}
+
+.dnd4e-combat-start__initiative-roll {
+	width: 2.4rem;
+	padding: 0 0.1rem;
+	border: 0;
+	border-bottom: 1px solid transparent;
+	background: transparent;
+	color: #7e776e;
+	font-family: var(--font-h1, "Modesto Condensed", serif);
+	font-size: 1.35rem;
+	line-height: 1;
+	text-align: right;
+	letter-spacing: 0.03em;
+}
+
+.dnd4e-combat-start__initiative-roll:hover {
+	color: #e5c580;
+	text-shadow: 0 0 0.35rem rgb(229 197 128 / 45%);
+}
+
 .dnd4e-combat-start__party footer {
 	display: grid;
-	gap: 0.4rem;
-	padding-top: 1rem;
+	gap: 0.3rem;
+	margin-top: 0.5rem;
+	padding-top: 0.55rem;
+	border-top: 1px solid rgb(139 116 80 / 35%);
 	text-align: center;
 }
 
 .dnd4e-combat-start__party footer small {
 	color: #7e776e;
-	font-size: 0.6rem;
+	font-size: 0.56rem;
+}
+
+.dnd4e-combat-start__combat-live {
+	color: #c79b59;
+	font-size: 0.68rem;
+	font-weight: 800;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
 }
 
 .dnd4e-combat-start__start {
-	padding: 0.78rem 1rem;
+	padding: 0.55rem 1rem;
 	border: 1px solid #dc6857;
 	border-radius: 0.25rem;
 	background: linear-gradient(#a53e34, #6b241f);
 	box-shadow: inset 0 1px rgb(255 190 174 / 35%), 0 0.45rem 1.4rem rgb(0 0 0 / 60%);
 	color: #fff2df;
 	font-family: var(--font-h1, "Modesto Condensed", serif);
-	font-size: 1.15rem;
+	font-size: 1.05rem;
 	font-weight: 700;
 	letter-spacing: 0.06em;
 	text-transform: uppercase;
@@ -1145,6 +1380,14 @@
 .dnd4e-combat-start__start:disabled {
 	opacity: 0.55;
 	transform: none;
+}
+
+.dnd4e-combat-start__start--secondary {
+	padding: 0.4rem 1rem;
+	border-color: #6b4f34;
+	background: linear-gradient(#2a2620, #1a1712);
+	box-shadow: inset 0 1px rgb(255 225 164 / 12%), 0 0.3rem 0.9rem rgb(0 0 0 / 45%);
+	font-size: 0.78rem;
 }
 
 .dnd4e-combat-start__start--player {

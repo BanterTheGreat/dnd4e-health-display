@@ -105,6 +105,9 @@
 								<i class="fa-solid fa-crown" aria-hidden="true"></i>
 							</button>
 						{{/if}}
+						<button type="button" data-action="removeCombatant" data-combatant-id="{{id}}" class="dnd4e-combat-start-setup__remove-combatant" title="Remove {{name}} from this encounter">
+							<i class="fa-solid fa-trash" aria-hidden="true"></i>
+						</button>
 					</article>
 				{{else}}
 					<p>No tokens are currently in this encounter.</p>
@@ -140,7 +143,7 @@
 								<div class="dnd4e-combat-start-setup__pointer-tokens">
 									{{#each tokenOptions}}
 										<label class="{{dispositionClass}}" title="{{name}}">
-											<input type="checkbox" data-pointer-id="{{../id}}" data-token-id="{{id}}" {{#if checked}}checked{{/if}}>
+											<input type="checkbox" data-pointer-id="{{../id}}" data-token-ids="{{memberIds}}" {{#if checked}}checked{{/if}}>
 											<img src="{{img}}" alt="">
 										</label>
 									{{/each}}
