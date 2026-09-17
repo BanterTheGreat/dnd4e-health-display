@@ -718,6 +718,7 @@ class CombatStartDisplay extends HandlebarsApplicationMixin(ApplicationV2) {
 		super(options);
 		this.presentation = presentation;
 		this.activeTab = "briefing";
+		this.strategyDraft = null;
 	}
 
 	static DEFAULT_OPTIONS = {
@@ -731,6 +732,13 @@ class CombatStartDisplay extends HandlebarsApplicationMixin(ApplicationV2) {
 			rollEnemyInitiative: CombatStartDisplay.prototype.onRollEnemyInitiative,
 			rollInitiative: CombatStartDisplay.prototype.onRollInitiative,
 			forceRollInitiative: CombatStartDisplay.prototype.onForceRollInitiative,
+			addStrategyPointer: CombatStartDisplay.prototype.onAddStrategyPointer,
+			removeStrategyPointer: CombatStartDisplay.prototype.onRemoveStrategyPointer,
+			addPointerNote: CombatStartDisplay.prototype.onAddPointerNote,
+			removePointerNote: CombatStartDisplay.prototype.onRemovePointerNote,
+			addEnvironmentNote: CombatStartDisplay.prototype.onAddEnvironmentNote,
+			removeEnvironmentNote: CombatStartDisplay.prototype.onRemoveEnvironmentNote,
+			saveStrategy: CombatStartDisplay.prototype.onSaveStrategy,
 		},
 	};
 
@@ -763,6 +771,20 @@ class CombatStartDisplay extends HandlebarsApplicationMixin(ApplicationV2) {
 		const hasUnrolledEnemyInitiative = combat?.combatants.some((combatant) => combatant.actor
 			&& !combatant.actor.hasPlayerOwner
 			&& combatant.initiative == null) ?? false;
+		this.strategyDraft ??= foundry.utils.deepClone(getStrategy(combat));
+		const enemyTypeGroups = getEnemyTypeGroups(combat);
+		const strategyPointers = this.strategyDraft.pointers.map((pointer) => ({
+			id: pointer.id,
+			notes: pointer.notes,
+			tokenOptions: enemyTypeGroups.map((group) => ({
+				id: group.id,
+				name: group.name,
+				img: group.img,
+				dispositionClass: group.dispositionClass,
+				memberIds: group.memberIds.join(","),
+				checked: group.memberIds.every((memberId) => pointer.combatantIds.includes(memberId)),
+			})),
+		}));
 		return foundry.utils.mergeObject(context, {
 			...presentation,
 			...roster,
@@ -775,6 +797,8 @@ class CombatStartDisplay extends HandlebarsApplicationMixin(ApplicationV2) {
 			initiativeTrackerPlacement: game.settings.get(MODULE_ID, INITIATIVE_TRACKER_PLACEMENT_SETTING),
 			showBriefing: this.activeTab === "briefing",
 			showStrategy: game.user.isGM && this.activeTab === "strategy",
+			strategyEnvironment: this.strategyDraft.environment,
+			strategyPointers,
 		});
 	}
 
@@ -832,8 +856,106 @@ class CombatStartDisplay extends HandlebarsApplicationMixin(ApplicationV2) {
 			return;
 		}
 
+		this.readStrategyDraft();
 		this.activeTab = tab;
 		this.render();
+	}
+
+	/** Keep the in-progress strategy field values before performing an action. */
+	readStrategyDraft() {
+		if (!this.element || this.activeTab !== "strategy") {
+			return this.strategyDraft;
+		}
+
+		const environment = Array.from(this.element.querySelectorAll("[data-env-note]")).map((input) => input.value);
+		const pointers = this.strategyDraft.pointers.map((pointer) => {
+			const notes = Array.from(this.element.querySelectorAll(`[data-pointer-note][data-pointer-id="${pointer.id}"]`))
+				.map((input) => input.value);
+			const checkboxes = this.element.querySelectorAll(`input[type="checkbox"][data-pointer-id="${pointer.id}"]`);
+			const combatantIds = Array.from(checkboxes)
+				.filter((checkbox) => checkbox.checked)
+				.flatMap((checkbox) => checkbox.dataset.tokenIds.split(","));
+			return { id: pointer.id, notes, combatantIds };
+		});
+		this.strategyDraft = { environment, pointers };
+		return this.strategyDraft;
+	}
+
+	/** Add a blank turn pointer ready to have tokens and notes assigned to it. */
+	onAddStrategyPointer() {
+		this.readStrategyDraft();
+		this.strategyDraft.pointers.push({ id: foundry.utils.randomID(), notes: [], combatantIds: [] });
+		this.render();
+	}
+
+	/** Remove a turn pointer. */
+	onRemoveStrategyPointer(event, target) {
+		this.readStrategyDraft();
+		this.strategyDraft.pointers = this.strategyDraft.pointers.filter((pointer) => pointer.id !== target.dataset.pointerId);
+		this.render();
+	}
+
+	/** Add a blank note line to a turn pointer. */
+	onAddPointerNote(event, target) {
+		this.readStrategyDraft();
+		const pointer = this.strategyDraft.pointers.find((candidate) => candidate.id === target.dataset.pointerId);
+		pointer?.notes.push("");
+		this.render();
+	}
+
+	/** Remove one note line from a turn pointer. */
+	onRemovePointerNote(event, target) {
+		this.readStrategyDraft();
+		const pointer = this.strategyDraft.pointers.find((candidate) => candidate.id === target.dataset.pointerId);
+		pointer?.notes.splice(Number(target.dataset.noteIndex), 1);
+		this.render();
+	}
+
+	/** Add a blank environment note line. */
+	onAddEnvironmentNote() {
+		this.readStrategyDraft();
+		this.strategyDraft.environment.push("");
+		this.render();
+	}
+
+	/** Remove one environment note line. */
+	onRemoveEnvironmentNote(event, target) {
+		this.readStrategyDraft();
+		this.strategyDraft.environment.splice(Number(target.dataset.noteIndex), 1);
+		this.render();
+	}
+
+	/** Apply the edited strategy notes to the live encounter immediately, without leaving this display. */
+	async onSaveStrategy() {
+		if (!game.user.isGM) {
+			return;
+		}
+
+		const draft = this.readStrategyDraft();
+		const combat = game.combats.get(this.combatId);
+		if (!combat) {
+			ui.notifications.error("The prepared encounter no longer exists.");
+			return;
+		}
+
+		const strategy = {
+			environment: draft.environment.map((note) => note.trim()).filter(Boolean),
+			pointers: draft.pointers.map((pointer) => ({
+				id: pointer.id,
+				combatantIds: pointer.combatantIds.filter((id) => combat.combatants.has(id)),
+				notes: pointer.notes.map((note) => note.trim()).filter(Boolean),
+			})),
+		};
+
+		try {
+			await setStrategy(combat, strategy);
+			this.strategyDraft = strategy;
+			ui.notifications.info("Battle Briefing strategy notes updated.");
+			this.render();
+		} catch (error) {
+			console.error(`${MODULE_ID} | Failed to update strategy notes.`, error);
+			ui.notifications.error("The strategy notes could not be updated. Check the console for details.");
+		}
 	}
 
 	/** Roll every NPC and start the encounter. */

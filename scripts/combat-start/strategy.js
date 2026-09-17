@@ -1,22 +1,13 @@
 const MODULE_ID = "dnd4e-health-display";
 const STRATEGY_FLAG = "strategy";
-const TURN_POINTER_TEMPLATE = `modules/${MODULE_ID}/scripts/combat-start/strategy-turn-pointer.hbs`;
-const ENVIRONMENT_TEMPLATE = `modules/${MODULE_ID}/scripts/combat-start/strategy-environment.hbs`;
-const TURN_POINTER_POSITION_SETTING = "combatStartTurnPointerPosition";
-const ENVIRONMENT_POSITION_SETTING = "combatStartEnvironmentPosition";
+const OVERLAY_TEMPLATE = `modules/${MODULE_ID}/scripts/combat-start/strategy-overlay.hbs`;
+const OVERLAY_POSITION_SETTING = "combatStartStrategyOverlayPosition";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
-/** Register the client-scoped settings that remember where the GM last placed each overlay. */
+/** Register the client-scoped setting that remembers where the GM last placed the strategy overlay. */
 export function registerStrategySettings() {
-	game.settings.register(MODULE_ID, TURN_POINTER_POSITION_SETTING, {
-		scope: "client",
-		config: false,
-		type: Object,
-		default: null,
-	});
-
-	game.settings.register(MODULE_ID, ENVIRONMENT_POSITION_SETTING, {
+	game.settings.register(MODULE_ID, OVERLAY_POSITION_SETTING, {
 		scope: "client",
 		config: false,
 		type: Object,
@@ -39,14 +30,13 @@ export function setStrategy(combat, strategy) {
 	return combat.setFlag(MODULE_ID, STRATEGY_FLAG, strategy);
 }
 
-/** Register the hooks that drive the turn-pointer dialog and the environment overlay. */
+/** Register the hooks that drive the strategy overlay. */
 export function registerStrategy() {
 	Hooks.on("updateCombat", onUpdateCombat);
 	Hooks.on("deleteCombat", onDeleteCombat);
 
 	if (game.user.isGM && game.combat?.started && game.combat.active) {
-		openEnvironmentPanel(game.combat);
-		showTurnPointers(game.combat);
+		refreshStrategyOverlay(game.combat);
 	}
 }
 
@@ -57,196 +47,179 @@ function onUpdateCombat(combat, changes) {
 	}
 
 	if (foundry.utils.hasProperty(changes, `flags.${MODULE_ID}.${STRATEGY_FLAG}`) && combat.started) {
-		openEnvironmentPanel(combat);
+		refreshStrategyOverlay(combat);
 	}
 
 	if ("turn" in changes || "round" in changes) {
 		if (combat.started) {
-			openEnvironmentPanel(combat);
-			showTurnPointers(combat);
+			refreshStrategyOverlay(combat);
 		} else {
-			closeEnvironmentPanel();
-			closeTurnPointerDialog();
+			closeStrategyOverlay();
 		}
 	}
 }
 
 /** @param {Combat} combat */
 function onDeleteCombat(combat) {
-	if (ui.Dnd4eStrategyEnvironment?.combatId === combat.id) {
-		closeEnvironmentPanel();
-	}
-	if (ui.Dnd4eStrategyTurnPointer?.combatId === combat.id) {
-		closeTurnPointerDialog();
+	if (ui.Dnd4eStrategyOverlay?.combatId === combat.id) {
+		closeStrategyOverlay();
 	}
 }
 
-/** Show, refresh, or close the turn-pointer dialog for the encounter's current combatant. */
-function showTurnPointers(combat) {
-	const combatant = combat.combatant;
-	if (!combatant) {
-		closeTurnPointerDialog();
-		return;
-	}
-
+/**
+ * Show, refresh, or close the combined strategy overlay: the encounter's environment notes,
+ * always on screen, plus whoever's turn it currently is, along with any pointer notes prepared
+ * for them.
+ *
+ * @param {Combat} combat
+ */
+function refreshStrategyOverlay(combat) {
 	const strategy = getStrategy(combat);
-	const notes = strategy.pointers
-		.filter((pointer) => pointer.combatantIds?.includes(combatant.id))
-		.flatMap((pointer) => pointer.notes ?? []);
-	if (!notes.length) {
-		closeTurnPointerDialog();
+	const environmentNotes = (strategy.environment ?? []).filter((note) => note?.trim());
+	const combatant = combat.combatant;
+	const pointerNotes = combatant
+		? strategy.pointers
+			.filter((pointer) => pointer.combatantIds?.includes(combatant.id))
+			.flatMap((pointer) => pointer.notes ?? [])
+		: [];
+
+	if (!environmentNotes.length && !combatant) {
+		closeStrategyOverlay();
 		return;
 	}
 
 	const data = {
 		combatId: combat.id,
-		combatantName: combatant.name,
-		combatantImg: combatant.actor?.img ?? combatant.token?.texture?.src ?? "icons/svg/mystery-man.svg",
-		notes,
+		environmentNotes,
+		turnPointer: combatant ? {
+			combatantName: combatant.name,
+			combatantImg: combatant.actor?.img ?? combatant.token?.texture?.src ?? "icons/svg/mystery-man.svg",
+			notes: pointerNotes,
+		} : null,
 	};
-	if (!ui.Dnd4eStrategyTurnPointer) {
-		ui.Dnd4eStrategyTurnPointer = new StrategyTurnPointerDialog({}, data);
-		ui.Dnd4eStrategyTurnPointer.render(true);
+
+	if (!ui.Dnd4eStrategyOverlay) {
+		ui.Dnd4eStrategyOverlay = new StrategyOverlayPanel({}, data);
+		ui.Dnd4eStrategyOverlay.render(true);
 		return;
 	}
 
-	ui.Dnd4eStrategyTurnPointer.setData(data);
+	ui.Dnd4eStrategyOverlay.setData(data);
 }
 
-/** Close the turn-pointer dialog and clear its shared UI reference. */
-function closeTurnPointerDialog() {
-	const dialog = ui.Dnd4eStrategyTurnPointer;
-	ui.Dnd4eStrategyTurnPointer = null;
-	void dialog?.close({ dnd4eForce: true });
-}
-
-/** Show, refresh, or close the persistent environment overlay for the active encounter. */
-function openEnvironmentPanel(combat) {
-	const strategy = getStrategy(combat);
-	const notes = (strategy.environment ?? []).filter((note) => note?.trim());
-	if (!notes.length) {
-		closeEnvironmentPanel();
-		return;
-	}
-
-	const data = { combatId: combat.id, notes };
-	if (!ui.Dnd4eStrategyEnvironment) {
-		ui.Dnd4eStrategyEnvironment = new StrategyEnvironmentPanel({}, data);
-		ui.Dnd4eStrategyEnvironment.render(true);
-		return;
-	}
-
-	ui.Dnd4eStrategyEnvironment.setData(data);
-}
-
-/** Close the environment overlay and clear its shared UI reference. */
-function closeEnvironmentPanel() {
-	const panel = ui.Dnd4eStrategyEnvironment;
-	ui.Dnd4eStrategyEnvironment = null;
+/** Close the strategy overlay and clear its shared UI reference. */
+function closeStrategyOverlay() {
+	const panel = ui.Dnd4eStrategyOverlay;
+	ui.Dnd4eStrategyOverlay = null;
 	void panel?.close({ dnd4eForce: true });
 }
 
-/** @param {string} settingKey @returns {object|null} A previously saved {left, top} (and optionally size), if any. */
-function getSavedPosition(settingKey) {
-	const saved = game.settings.get(MODULE_ID, settingKey);
-	return saved && typeof saved === "object" ? saved : null;
+/**
+ * @returns {{left: number, top: number}|null} A previously saved position, if any. Only the
+ * position is remembered: the overlay isn't resizable, and its height tracks its content (notes
+ * change from turn to turn), so a fixed remembered size would clip whatever no longer fits the
+ * size it happened to have last time.
+ */
+function getSavedPosition() {
+	const saved = game.settings.get(MODULE_ID, OVERLAY_POSITION_SETTING);
+	if (!saved || typeof saved !== "object") {
+		return null;
+	}
+
+	return { left: saved.left, top: saved.top };
 }
 
-/** Persist an overlay's current position, debounced so dragging doesn't spam the client setting. */
-const persistPosition = foundry.utils.debounce((settingKey, position) => {
-	void game.settings.set(MODULE_ID, settingKey, {
+/** Persist the overlay's current position, debounced so dragging doesn't spam the client setting. */
+const persistPosition = foundry.utils.debounce((position) => {
+	void game.settings.set(MODULE_ID, OVERLAY_POSITION_SETTING, {
 		left: position.left,
 		top: position.top,
-		width: position.width,
-		height: position.height,
 	});
 }, 400);
 
-/**
- * Shared behaviour for the GM-only strategy overlays: they remember where the GM last placed
- * them instead of reopening centered, and only the module's own hooks (never the player, a
- * misclick, or the Escape key) may actually close them, since their visibility is driven by
- * combat state rather than user intent.
- *
- * @param {typeof ApplicationV2} Base
- * @param {string} positionSettingKey
- * @param {() => {left: number, top: number}} getDefaultPosition Evaluated lazily, since it
- * reads the current browser window size.
- */
-function ManagedOverlayMixin(Base, positionSettingKey, getDefaultPosition) {
-	return class extends Base {
-		constructor(options, data) {
-			super(foundry.utils.mergeObject({
-				position: getSavedPosition(positionSettingKey) ?? getDefaultPosition(),
-			}, options));
-			this.data = data;
-		}
+/** GM-only overlay showing the encounter's environment notes and whoever's turn it currently is, with any pointer notes prepared for them. */
+class StrategyOverlayPanel extends HandlebarsApplicationMixin(ApplicationV2) {
+	constructor(options, data) {
+		super(foundry.utils.mergeObject({
+			position: getSavedPosition() ?? { left: 20, top: window.innerHeight - 320 },
+		}, options));
+		this.data = data;
+	}
 
-		get combatId() {
-			return this.data.combatId;
-		}
-
-		/** @param {object} data */
-		setData(data) {
-			this.data = data;
-			this.render();
-		}
-
-		/** @returns {object} */
-		async _prepareContext(options) {
-			const context = await super._prepareContext(options);
-			return foundry.utils.mergeObject(context, this.data);
-		}
-
-		/** Remember the GM's chosen position (and size, if resizable) for the next time this overlay opens. */
-		setPosition(position) {
-			const applied = super.setPosition(position);
-			persistPosition(positionSettingKey, this.position);
-			return applied;
-		}
-
-		/** This overlay is driven entirely by combat state; only the module itself may close it. */
-		async close(options = {}) {
-			if (!options.dnd4eForce) {
-				return this;
-			}
-			return super.close(options);
-		}
-	};
-}
-
-/** GM-only dialog announcing a combatant's turn alongside the pointers prepared for it. */
-class StrategyTurnPointerDialog extends ManagedOverlayMixin(
-	HandlebarsApplicationMixin(ApplicationV2),
-	TURN_POINTER_POSITION_SETTING,
-	() => ({ left: window.innerWidth - 420, top: window.innerHeight - 300 }),
-) {
 	static DEFAULT_OPTIONS = {
-		id: "dnd4e-strategy-turn-pointer",
-		classes: ["dnd4e-strategy-turn-pointer"],
-		position: { width: 380 },
-		window: { title: "Turn Pointer", resizable: false, minimizable: false },
+		id: "dnd4e-strategy-overlay",
+		classes: ["dnd4e-strategy-overlay"],
+		position: { width: 360, height: "auto" },
+		window: { title: "Combat Pointers", resizable: false, minimizable: false },
+		actions: {
+			previousTurn: StrategyOverlayPanel.prototype.onPreviousTurn,
+			nextTurn: StrategyOverlayPanel.prototype.onNextTurn,
+		},
 	};
 
 	static PARTS = {
-		main: { template: TURN_POINTER_TEMPLATE },
-	};
-}
-
-/** GM-only overlay that keeps the encounter's environment notes visible for the whole fight. */
-class StrategyEnvironmentPanel extends ManagedOverlayMixin(
-	HandlebarsApplicationMixin(ApplicationV2),
-	ENVIRONMENT_POSITION_SETTING,
-	() => ({ left: 20, top: window.innerHeight - 300 }),
-) {
-	static DEFAULT_OPTIONS = {
-		id: "dnd4e-strategy-environment",
-		classes: ["dnd4e-strategy-environment"],
-		position: { width: 320, height: "auto" },
-		window: { title: "Environment", resizable: true, minimizable: false },
+		main: { template: OVERLAY_TEMPLATE },
 	};
 
-	static PARTS = {
-		main: { template: ENVIRONMENT_TEMPLATE },
-	};
+	get combatId() {
+		return this.data.combatId;
+	}
+
+	/** @param {object} data */
+	setData(data) {
+		this.data = data;
+		this.render();
+	}
+
+	/** @returns {object} */
+	async _prepareContext(options) {
+		const context = await super._prepareContext(options);
+		return foundry.utils.mergeObject(context, this.data);
+	}
+
+	/** Remember the GM's chosen position and size for the next time this overlay opens. */
+	setPosition(position) {
+		const applied = super.setPosition(position);
+		persistPosition(this.position);
+		return applied;
+	}
+
+	/**
+	 * This overlay is driven entirely by combat state, not opened or closed by the GM directly,
+	 * so only the module's own hooks (never a misclick or the Escape key) may actually close it.
+	 */
+	async close(options = {}) {
+		if (!options.dnd4eForce) {
+			return this;
+		}
+		return super.close(options);
+	}
+
+	/** Step back to the previous combatant's turn. */
+	async onPreviousTurn() {
+		if (!game.user.isGM) {
+			return;
+		}
+
+		try {
+			await game.combats.get(this.combatId)?.previousTurn();
+		} catch (error) {
+			console.error(`${MODULE_ID} | Failed to go back to the previous turn.`, error);
+			ui.notifications.error("Could not go back to the previous turn. Check the console for details.");
+		}
+	}
+
+	/** Advance to the next combatant's turn. */
+	async onNextTurn() {
+		if (!game.user.isGM) {
+			return;
+		}
+
+		try {
+			await game.combats.get(this.combatId)?.nextTurn();
+		} catch (error) {
+			console.error(`${MODULE_ID} | Failed to advance to the next turn.`, error);
+			ui.notifications.error("Could not advance to the next turn. Check the console for details.");
+		}
+	}
 }

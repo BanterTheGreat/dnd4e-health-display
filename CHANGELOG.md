@@ -28,6 +28,12 @@ Fixed the Environment overlay never appearing when its notes were prepared befor
 
 Fixed saved Battle Briefing presets losing which token each turn pointer was assigned to. Presets now remember pointer targets by actor instead of by that encounter's own combatant IDs, so they still apply correctly once loaded into a different encounter.
 
+The GM's private Battle Briefing view now has a working Strategy tab once the encounter is already underway, letting the GM add, edit, or remove turn pointers and environment notes mid-fight and apply them to the live encounter immediately, refreshing the strategy overlay right away instead of only on the next turn.
+
+The separate Turn Pointer dialog and Environment overlay are now a single overlay, titled Combat Pointers, with the encounter's environment notes on top and, underneath, whoever's turn it currently is. Environment notes are now a bolder, bordered callout instead of quiet italic text, so they no longer read as a disconnected afterthought, and the Now Acting section stays visible for the current combatant even when no pointer notes are prepared for them, saying so instead of disappearing.
+
+Combat Pointers now has Previous, End Turn, and Next buttons under the Now Acting section, letting the GM step the encounter back and forward without switching to the combat tracker.
+
 ## 2.0
 
 Streamlined the actor display typography to Signika for interface and supporting text, reserving Modesto Condensed for character identity and headline resource values while retaining italic flavour copy.

@@ -127,10 +127,75 @@
 
 	{{#if showStrategy}}
 		<section class="dnd4e-combat-start__strategy">
-			<i class="fa-solid fa-map-location-dot" aria-hidden="true"></i>
-			<span class="dnd4e-combat-start__eyebrow">GM Workspace</span>
-			<h2>Strategy</h2>
-			<p>This placeholder is ready for encounter notes, deployment controls, or hidden objectives.</p>
+			<div class="dnd4e-combat-start__strategy-column">
+				<div class="dnd4e-combat-start__strategy-heading">
+					<div>
+						<span class="dnd4e-combat-start__eyebrow">Turn Pointers</span>
+						<h3>Remember This, When It's Their Turn</h3>
+					</div>
+					<button type="button" data-action="addStrategyPointer">
+						<i class="fa-solid fa-plus" aria-hidden="true"></i> Add Pointer
+					</button>
+				</div>
+				<div class="dnd4e-combat-start__strategy-pointers">
+					{{#each strategyPointers}}
+						<article class="dnd4e-combat-start__strategy-pointer">
+							<button type="button" data-action="removeStrategyPointer" data-pointer-id="{{id}}" class="dnd4e-combat-start__strategy-delete" title="Remove this pointer">
+								<i class="fa-solid fa-trash" aria-hidden="true"></i>
+							</button>
+							<div class="dnd4e-combat-start__strategy-pointer-tokens">
+								{{#each tokenOptions}}
+									<label class="{{dispositionClass}}" title="{{name}}">
+										<input type="checkbox" data-pointer-id="{{../id}}" data-token-ids="{{memberIds}}" {{#if checked}}checked{{/if}}>
+										<img src="{{img}}" alt="">
+									</label>
+								{{/each}}
+							</div>
+							<div class="dnd4e-combat-start__strategy-note-list">
+								{{#each notes}}
+									<div class="dnd4e-combat-start__strategy-note-row">
+										<input type="text" data-pointer-note data-pointer-id="{{../id}}" value="{{this}}" placeholder="Remember this on their turn…">
+										<button type="button" data-action="removePointerNote" data-pointer-id="{{../id}}" data-note-index="{{@index}}" title="Remove this note">
+											<i class="fa-solid fa-xmark" aria-hidden="true"></i>
+										</button>
+									</div>
+								{{/each}}
+								<button type="button" data-action="addPointerNote" data-pointer-id="{{id}}" class="dnd4e-combat-start__strategy-add-note">
+									<i class="fa-solid fa-plus" aria-hidden="true"></i> Add Note
+								</button>
+							</div>
+						</article>
+					{{else}}
+						<p>No turn pointers yet. Select tokens above and add a note for when their turn comes up.</p>
+					{{/each}}
+				</div>
+			</div>
+			<div class="dnd4e-combat-start__strategy-column">
+				<div class="dnd4e-combat-start__strategy-heading">
+					<div>
+						<span class="dnd4e-combat-start__eyebrow">Environment</span>
+						<h3>Always On Your Screen</h3>
+					</div>
+				</div>
+				<div class="dnd4e-combat-start__strategy-note-list">
+					{{#each strategyEnvironment}}
+						<div class="dnd4e-combat-start__strategy-note-row">
+							<input type="text" data-env-note value="{{this}}" placeholder="Bystander peril, terrain hazards…">
+							<button type="button" data-action="removeEnvironmentNote" data-note-index="{{@index}}" title="Remove this note">
+								<i class="fa-solid fa-xmark" aria-hidden="true"></i>
+							</button>
+						</div>
+					{{/each}}
+					<button type="button" data-action="addEnvironmentNote" class="dnd4e-combat-start__strategy-add-note">
+						<i class="fa-solid fa-plus" aria-hidden="true"></i> Add Note
+					</button>
+				</div>
+			</div>
+			<footer class="dnd4e-combat-start__strategy-actions">
+				<button type="button" data-action="saveStrategy" class="dnd4e-combat-start__strategy-save">
+					<i class="fa-solid fa-floppy-disk" aria-hidden="true"></i> Apply to Encounter
+				</button>
+			</footer>
 		</section>
 	{{/if}}
 </section>
