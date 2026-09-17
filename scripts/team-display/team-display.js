@@ -106,6 +106,7 @@ class TeamDisplay extends HandlebarsApplicationMixin(ApplicationV2) {
 		super._onRender(context, options);
 		this.ensureFloatingElement();
 		this.initializeDrag();
+		this.initializeMemberInteractions();
 		this.restorePosition();
 	}
 
@@ -154,6 +155,50 @@ class TeamDisplay extends HandlebarsApplicationMixin(ApplicationV2) {
 			document.addEventListener("pointermove", move);
 			document.addEventListener("pointerup", release);
 		});
+	}
+
+	/** Bind token selection and actor-sheet controls for each team member. */
+	initializeMemberInteractions() {
+		const members = this.element.querySelectorAll(".dnd4e-info-team-display__member");
+		for (const member of members) {
+			member.addEventListener("click", () => this.selectMemberToken(member.dataset.tokenId));
+			member.addEventListener("contextmenu", (event) => {
+				event.preventDefault();
+				this.openMemberSheet(member.dataset.tokenId, member.dataset.actorId);
+			});
+			member.addEventListener("keydown", (event) => {
+				if (event.key !== "Enter" && event.key !== " ") {
+					return;
+				}
+
+				event.preventDefault();
+				this.selectMemberToken(member.dataset.tokenId);
+			});
+		}
+	}
+
+	/** Select a displayed token when the current user is permitted to control it. */
+	selectMemberToken(tokenId) {
+		const token = canvas.tokens?.get(tokenId);
+		if (!token?.isVisible || !token.document.isOwner) {
+			return;
+		}
+
+		try {
+			token.control({ releaseOthers: true });
+		} catch (error) {
+			console.warn(`${MODULE_ID} | Could not select team member token.`, error);
+		}
+	}
+
+	/** Open the character sheet for a displayed party member. */
+	openMemberSheet(tokenId, actorId) {
+		const actor = canvas.tokens?.get(tokenId)?.actor || game.actors?.get(actorId);
+		if (!actor?.sheet) {
+			return;
+		}
+
+		actor.sheet.render(true);
 	}
 
 	/** Restore the user's last saved display position. */

@@ -1,0 +1,14 @@
+<div class="dnd4e-strategy-turn-pointer">
+	<header class="dnd4e-strategy-turn-pointer__header">
+		<img src="{{combatantImg}}" alt="">
+		<div>
+			<span>Now Acting</span>
+			<h2>{{combatantName}}</h2>
+		</div>
+	</header>
+	<ul class="dnd4e-strategy-turn-pointer__list">
+		{{#each notes}}
+			<li>{{this}}</li>
+		{{/each}}
+	</ul>
+</div>

@@ -1,28 +1,39 @@
 <form class="dnd4e-combat-start-setup__form">
 	<header class="dnd4e-combat-start-setup__heading">
-		<span>Encounter Presentation</span>
-		<h2>{{combatName}}</h2>
-		<p>Prepare the briefing your players will see before initiative begins.</p>
+		<div>
+			<span>Encounter Presentation</span>
+			<h2>{{combatName}}</h2>
+			<p>Prepare the briefing your players will see before initiative begins.</p>
+		</div>
+		<section class="dnd4e-combat-start-setup__presets" aria-label="Saved Battle Briefing presets">
+			<label for="dnd4e-combat-start-preset">Load preset</label>
+			<div class="dnd4e-combat-start-setup__preset-row">
+				<select id="dnd4e-combat-start-preset" name="preset">
+					<option value="">Choose a preset…</option>
+					{{#each presets}}
+						<option value="{{id}}" {{#if selected}}selected{{/if}}>{{name}}</option>
+					{{/each}}
+				</select>
+				<button type="button" data-action="loadPreset" {{#unless hasPresets}}disabled{{/unless}}>Load</button>
+				<button type="button" data-action="deletePreset" class="dnd4e-combat-start-setup__delete" {{#unless hasSelectedPreset}}disabled{{/unless}} title="Delete selected preset">
+					<i class="fa-solid fa-trash" aria-hidden="true"></i>
+				</button>
+			</div>
+		</section>
 	</header>
 
-	<div class="dnd4e-combat-start-setup__workspace">
-		<div class="dnd4e-combat-start-setup__editor">
-			<section class="dnd4e-combat-start-setup__presets" aria-label="Saved Battle Briefing presets">
-				<label for="dnd4e-combat-start-preset">Saved encounter</label>
-				<div class="dnd4e-combat-start-setup__preset-row">
-					<select id="dnd4e-combat-start-preset" name="preset">
-						<option value="">Choose a preset…</option>
-						{{#each presets}}
-							<option value="{{id}}" {{#if selected}}selected{{/if}}>{{name}}</option>
-						{{/each}}
-					</select>
-					<button type="button" data-action="loadPreset" {{#unless hasPresets}}disabled{{/unless}}>Load</button>
-					<button type="button" data-action="deletePreset" class="dnd4e-combat-start-setup__delete" {{#unless hasSelectedPreset}}disabled{{/unless}} title="Delete selected preset">
-						<i class="fa-solid fa-trash" aria-hidden="true"></i>
-					</button>
-				</div>
-			</section>
+	<nav class="dnd4e-combat-start-setup__tabs" aria-label="Battle Briefing preparation sections">
+		<button type="button" data-action="showTab" data-tab="briefing" class="{{#if showBriefing}}is-active{{/if}}">
+			<i class="fa-solid fa-shield-halved" aria-hidden="true"></i> Battle Briefing
+		</button>
+		<button type="button" data-action="showTab" data-tab="strategy" class="{{#if showStrategy}}is-active{{/if}}">
+			<i class="fa-solid fa-chess-knight" aria-hidden="true"></i> Strategy
+		</button>
+	</nav>
 
+	<div class="dnd4e-combat-start-setup__workspace">
+		{{#if showBriefing}}
+		<div class="dnd4e-combat-start-setup__editor">
 			<div class="dnd4e-combat-start-setup__fields">
 				<label class="dnd4e-combat-start-setup__wide">
 					<span>Title</span>
@@ -61,16 +72,6 @@
 				</fieldset>
 			</div>
 
-			<footer class="dnd4e-combat-start-setup__actions">
-				<div class="dnd4e-combat-start-setup__save-group">
-					<label>
-						<span>Preset name</span>
-						<input type="text" name="presetName" value="{{draft.name}}" placeholder="The Ember Gate">
-					</label>
-					<button type="button" data-action="savePreset"><i class="fa-solid fa-bookmark" aria-hidden="true"></i> Save Preset</button>
-				</div>
-				<button type="button" data-action="show" class="dnd4e-combat-start-setup__show"><i class="fa-solid fa-eye" aria-hidden="true"></i> Show to Players</button>
-			</footer>
 		</div>
 
 		<section class="dnd4e-combat-start-setup__roster" aria-label="Current encounter combatants">
@@ -95,7 +96,7 @@
 				{{#each combatants}}
 					<article class="{{dispositionClass}} {{#if isCommander}}is-commander{{/if}} {{#if isHidden}}is-hidden{{/if}}">
 						<img src="{{img}}" alt="">
-						<div><strong>{{name}}</strong><small>{{disposition}} · Level {{level}} · {{role}}</small></div>
+						<div><strong>{{name}}</strong><small>Level {{level}} · {{role}}</small></div>
 						<button type="button" data-action="toggleCombatantHidden" data-combatant-id="{{id}}" class="dnd4e-combat-start-setup__visibility-toggle" aria-pressed="{{isHidden}}" title="{{#if isHidden}}Show{{else}}Hide{{/if}} {{name}} to players">
 							<i class="fa-solid {{#if isHidden}}fa-eye-slash{{else}}fa-eye{{/if}}" aria-hidden="true"></i>
 						</button>
@@ -109,6 +110,93 @@
 					<p>No tokens are currently in this encounter.</p>
 				{{/each}}
 			</div>
+			{{#if hasMissingCombatants}}
+				<section class="dnd4e-combat-start-setup__missing-combatants" aria-live="polite">
+					<strong>Missing from preset</strong>
+					{{#each missingCombatants}}
+						<span>{{count}} of {{name}}</span>
+					{{/each}}
+				</section>
+			{{/if}}
 		</section>
+		{{else}}
+			<section class="dnd4e-combat-start-setup__strategy" aria-label="Strategy">
+				<div class="dnd4e-combat-start-setup__strategy-column">
+					<div class="dnd4e-combat-start-setup__section-heading">
+						<div>
+							<span>Turn Pointers</span>
+							<h3>Remember This, When It's Their Turn</h3>
+						</div>
+						<button type="button" data-action="addStrategyPointer">
+							<i class="fa-solid fa-plus" aria-hidden="true"></i> Add Pointer
+						</button>
+					</div>
+					<div class="dnd4e-combat-start-setup__pointers">
+						{{#each strategyPointers}}
+							<article class="dnd4e-combat-start-setup__pointer">
+								<button type="button" data-action="removeStrategyPointer" data-pointer-id="{{id}}" class="dnd4e-combat-start-setup__delete" title="Remove this pointer">
+									<i class="fa-solid fa-trash" aria-hidden="true"></i>
+								</button>
+								<div class="dnd4e-combat-start-setup__pointer-tokens">
+									{{#each tokenOptions}}
+										<label class="{{dispositionClass}}" title="{{name}}">
+											<input type="checkbox" data-pointer-id="{{../id}}" data-token-id="{{id}}" {{#if checked}}checked{{/if}}>
+											<img src="{{img}}" alt="">
+										</label>
+									{{/each}}
+								</div>
+								<div class="dnd4e-combat-start-setup__note-list">
+									{{#each notes}}
+										<div class="dnd4e-combat-start-setup__note-row">
+											<input type="text" data-pointer-note data-pointer-id="{{../id}}" value="{{this}}" placeholder="Remember this on their turn…">
+											<button type="button" data-action="removePointerNote" data-pointer-id="{{../id}}" data-note-index="{{@index}}" title="Remove this note">
+												<i class="fa-solid fa-xmark" aria-hidden="true"></i>
+											</button>
+										</div>
+									{{/each}}
+									<button type="button" data-action="addPointerNote" data-pointer-id="{{id}}" class="dnd4e-combat-start-setup__add-note">
+										<i class="fa-solid fa-plus" aria-hidden="true"></i> Add Note
+									</button>
+								</div>
+							</article>
+						{{else}}
+							<p>No turn pointers yet. Select tokens above and add a note for when their turn comes up.</p>
+						{{/each}}
+					</div>
+				</div>
+				<div class="dnd4e-combat-start-setup__strategy-column">
+					<div class="dnd4e-combat-start-setup__section-heading">
+						<div>
+							<span>Environment</span>
+							<h3>Always On Your Screen</h3>
+						</div>
+					</div>
+					<div class="dnd4e-combat-start-setup__note-list">
+						{{#each strategyEnvironment}}
+							<div class="dnd4e-combat-start-setup__note-row">
+								<input type="text" data-env-note value="{{this}}" placeholder="Bystander peril, terrain hazards…">
+								<button type="button" data-action="removeEnvironmentNote" data-note-index="{{@index}}" title="Remove this note">
+									<i class="fa-solid fa-xmark" aria-hidden="true"></i>
+								</button>
+							</div>
+						{{/each}}
+						<button type="button" data-action="addEnvironmentNote" class="dnd4e-combat-start-setup__add-note">
+							<i class="fa-solid fa-plus" aria-hidden="true"></i> Add Note
+						</button>
+					</div>
+				</div>
+			</section>
+		{{/if}}
 	</div>
+
+	<footer class="dnd4e-combat-start-setup__actions">
+		<div class="dnd4e-combat-start-setup__save-group">
+			<label>
+				<span>Preset name</span>
+				<input type="text" name="presetName" value="{{draft.name}}" placeholder="The Ember Gate">
+			</label>
+			<button type="button" data-action="savePreset"><i class="fa-solid fa-bookmark" aria-hidden="true"></i> Save Preset</button>
+		</div>
+		<button type="button" data-action="show" class="dnd4e-combat-start-setup__show"><i class="fa-solid fa-eye" aria-hidden="true"></i> Start Briefing</button>
+	</footer>
 </form>

@@ -1,3 +1,5 @@
+import { getDefaultStrategy, getStrategy, setStrategy } from "./strategy.js";
+
 const MODULE_ID = "dnd4e-health-display";
 const PRESETS_SETTING = "combatStartPresets";
 const ACTIVE_SETTING = "activeCombatStart";
@@ -143,13 +145,15 @@ class CombatStartSetup extends HandlebarsApplicationMixin(ApplicationV2) {
 		this.combat = combat;
 		this.selectedPresetId = "";
 		this.commanderCombatantId = "";
+		this.activeTab = "briefing";
 		this.draft = getDefaultPresentation();
+		this.strategyDraft = foundry.utils.deepClone(getStrategy(combat));
 	}
 
 	static DEFAULT_OPTIONS = {
 		id: "dnd4e-combat-start-setup",
 		classes: ["dnd4e-combat-start-setup"],
-		position: { width: 940, height: 650 },
+		position: { width: 940, height: 760 },
 		window: { title: "Prepare Battle Briefing", resizable: true },
 		actions: {
 			show: CombatStartSetup.prototype.onShow,
@@ -161,6 +165,13 @@ class CombatStartSetup extends HandlebarsApplicationMixin(ApplicationV2) {
 			addHostileTokens: CombatStartSetup.prototype.onAddHostileTokens,
 			setCommander: CombatStartSetup.prototype.onSetCommander,
 			toggleCombatantHidden: CombatStartSetup.prototype.onToggleCombatantHidden,
+			showTab: CombatStartSetup.prototype.onShowTab,
+			addStrategyPointer: CombatStartSetup.prototype.onAddStrategyPointer,
+			removeStrategyPointer: CombatStartSetup.prototype.onRemoveStrategyPointer,
+			addPointerNote: CombatStartSetup.prototype.onAddPointerNote,
+			removePointerNote: CombatStartSetup.prototype.onRemovePointerNote,
+			addEnvironmentNote: CombatStartSetup.prototype.onAddEnvironmentNote,
+			removeEnvironmentNote: CombatStartSetup.prototype.onRemoveEnvironmentNote,
 		},
 	};
 
@@ -178,6 +189,7 @@ class CombatStartSetup extends HandlebarsApplicationMixin(ApplicationV2) {
 		this.selectedPresetId = "";
 		this.commanderCombatantId = "";
 		this.draft = getDefaultPresentation();
+		this.strategyDraft = foundry.utils.deepClone(getStrategy(combat));
 	}
 
 	/** @returns {object} */
@@ -193,7 +205,6 @@ class CombatStartSetup extends HandlebarsApplicationMixin(ApplicationV2) {
 		const commanderCombatant = hostileCombatants.find((combatant) => combatant.id === this.commanderCombatantId);
 		const combatants = Array.from(this.combat?.combatants ?? []).map((combatant) => ({
 			...getCombatantData(combatant),
-			disposition: getDispositionLabel(combatant.token?.disposition),
 			dispositionClass: getDispositionClass(combatant.token?.disposition),
 			isHidden: isCombatantHidden(combatant),
 			canBeCommander: combatant.token?.disposition === CONST.TOKEN_DISPOSITIONS.HOSTILE
@@ -203,10 +214,27 @@ class CombatStartSetup extends HandlebarsApplicationMixin(ApplicationV2) {
 		const availableFriendlyTokens = getAvailableSceneTokens(this.combat, CONST.TOKEN_DISPOSITIONS.FRIENDLY);
 		const availableNeutralTokens = getAvailableSceneTokens(this.combat, CONST.TOKEN_DISPOSITIONS.NEUTRAL);
 		const availableHostileTokens = getAvailableSceneTokens(this.combat, CONST.TOKEN_DISPOSITIONS.HOSTILE);
+		const selectedPreset = presets.find((preset) => preset.id === this.selectedPresetId);
+		const missingCombatants = getMissingCombatants(selectedPreset?.expectedCombatants, this.combat);
+		const strategyPointers = this.strategyDraft.pointers.map((pointer) => ({
+			id: pointer.id,
+			notes: pointer.notes,
+			tokenOptions: combatants.map((combatant) => ({
+				id: combatant.id,
+				name: combatant.name,
+				img: combatant.img,
+				dispositionClass: combatant.dispositionClass,
+				checked: pointer.combatantIds.includes(combatant.id),
+			})),
+		}));
 		return foundry.utils.mergeObject(context, {
 			combatName: this.combat?.name ?? "Encounter",
+			showBriefing: this.activeTab === "briefing",
+			showStrategy: this.activeTab === "strategy",
 			draft: this.draft,
 			combatants,
+			strategyEnvironment: this.strategyDraft.environment,
+			strategyPointers,
 			commanderPreview: commanderCombatant ? getCombatantData(commanderCombatant) : null,
 			commanderPreviewScale: Number(this.draft.commanderZoom ?? 100) / 100,
 			hasCombatants: combatants.length > 0,
@@ -216,6 +244,8 @@ class CombatStartSetup extends HandlebarsApplicationMixin(ApplicationV2) {
 			hasAvailableFriendlyTokens: availableFriendlyTokens.length > 0,
 			hasAvailableNeutralTokens: availableNeutralTokens.length > 0,
 			hasAvailableHostileTokens: availableHostileTokens.length > 0,
+			missingCombatants,
+			hasMissingCombatants: missingCombatants.length > 0,
 			presets: presets.map((preset) => ({
 				...preset,
 				selected: preset.id === this.selectedPresetId,
@@ -223,6 +253,19 @@ class CombatStartSetup extends HandlebarsApplicationMixin(ApplicationV2) {
 			hasPresets: presets.length > 0,
 			hasSelectedPreset: Boolean(this.selectedPresetId),
 		});
+	}
+
+	/** Switch between the briefing editor and its future strategy workspace. */
+	onShowTab(event, target) {
+		const tab = target.dataset.tab;
+		if (!tab || tab === this.activeTab) {
+			return;
+		}
+
+		this.readDraft();
+		this.readStrategyDraft();
+		this.activeTab = tab;
+		this.render();
 	}
 
 	/** Keep the commander artwork preview synchronized with its focus and zoom sliders. */
@@ -248,7 +291,7 @@ class CombatStartSetup extends HandlebarsApplicationMixin(ApplicationV2) {
 
 	/** Keep the in-progress field values before performing an action. */
 	readDraft() {
-		if (!this.element) {
+		if (!this.element || this.activeTab !== "briefing") {
 			return this.draft;
 		}
 
@@ -265,11 +308,95 @@ class CombatStartSetup extends HandlebarsApplicationMixin(ApplicationV2) {
 		return this.draft;
 	}
 
-	/** Save the current copy as a reusable world preset. */
+	/** Keep the in-progress strategy field values before performing an action. */
+	readStrategyDraft() {
+		if (!this.element || this.activeTab !== "strategy") {
+			return this.strategyDraft;
+		}
+
+		const environment = Array.from(this.element.querySelectorAll("[data-env-note]")).map((input) => input.value);
+		const pointers = this.strategyDraft.pointers.map((pointer) => {
+			const notes = Array.from(this.element.querySelectorAll(`[data-pointer-note][data-pointer-id="${pointer.id}"]`))
+				.map((input) => input.value);
+			const checkboxes = this.element.querySelectorAll(`input[type="checkbox"][data-pointer-id="${pointer.id}"]`);
+			const combatantIds = Array.from(checkboxes)
+				.filter((checkbox) => checkbox.checked)
+				.map((checkbox) => checkbox.dataset.tokenId);
+			return { id: pointer.id, notes, combatantIds };
+		});
+		this.strategyDraft = { environment, pointers };
+		return this.strategyDraft;
+	}
+
+	/** Add a blank turn pointer ready to have tokens and notes assigned to it. */
+	onAddStrategyPointer() {
+		this.readStrategyDraft();
+		this.strategyDraft.pointers.push({ id: foundry.utils.randomID(), notes: [], combatantIds: [] });
+		this.render();
+	}
+
+	/** Remove a turn pointer. */
+	onRemoveStrategyPointer(event, target) {
+		this.readStrategyDraft();
+		this.strategyDraft.pointers = this.strategyDraft.pointers.filter((pointer) => pointer.id !== target.dataset.pointerId);
+		this.render();
+	}
+
+	/** Add a blank note line to a turn pointer. */
+	onAddPointerNote(event, target) {
+		this.readStrategyDraft();
+		const pointer = this.strategyDraft.pointers.find((candidate) => candidate.id === target.dataset.pointerId);
+		pointer?.notes.push("");
+		this.render();
+	}
+
+	/** Remove one note line from a turn pointer. */
+	onRemovePointerNote(event, target) {
+		this.readStrategyDraft();
+		const pointer = this.strategyDraft.pointers.find((candidate) => candidate.id === target.dataset.pointerId);
+		pointer?.notes.splice(Number(target.dataset.noteIndex), 1);
+		this.render();
+	}
+
+	/** Add a blank environment note line. */
+	onAddEnvironmentNote() {
+		this.readStrategyDraft();
+		this.strategyDraft.environment.push("");
+		this.render();
+	}
+
+	/** Remove one environment note line. */
+	onRemoveEnvironmentNote(event, target) {
+		this.readStrategyDraft();
+		this.strategyDraft.environment.splice(Number(target.dataset.noteIndex), 1);
+		this.render();
+	}
+
+	/** Save the current copy as a reusable world preset and apply its strategy notes to this encounter. */
 	async onSavePreset() {
 		const draft = this.readDraft();
+		const strategyDraft = this.readStrategyDraft();
+		const strategy = {
+			environment: strategyDraft.environment.map((note) => note.trim()).filter(Boolean),
+			pointers: strategyDraft.pointers.map((pointer) => ({
+				id: pointer.id,
+				combatantIds: pointer.combatantIds.filter((id) => this.combat?.combatants.has(id)),
+				notes: pointer.notes.map((note) => note.trim()).filter(Boolean),
+			})),
+		};
+
+		try {
+			await setStrategy(this.combat, strategy);
+			this.strategyDraft = strategy;
+		} catch (error) {
+			console.error(`${MODULE_ID} | Failed to apply strategy notes to the encounter.`, error);
+			ui.notifications.error("The strategy notes could not be applied. Check the console for details.");
+			return;
+		}
+
 		if (!draft.name) {
-			ui.notifications.warn("Give this Battle Briefing preset a name first.");
+			ui.notifications.info("Applied strategy notes to this encounter. Name a preset to also save it for reuse.");
+			this.render();
 			return;
 		}
 
@@ -278,6 +405,8 @@ class CombatStartSetup extends HandlebarsApplicationMixin(ApplicationV2) {
 		const saved = {
 			id: existing?.id ?? foundry.utils.randomID(),
 			...draft,
+			expectedCombatants: getExpectedCombatants(this.combat),
+			strategy,
 		};
 		const nextPresets = existing
 			? presets.map((preset) => preset.id === saved.id ? saved : preset)
@@ -292,6 +421,7 @@ class CombatStartSetup extends HandlebarsApplicationMixin(ApplicationV2) {
 	/** Load the selected preset into the editable fields. */
 	onLoadPreset() {
 		this.readDraft();
+		this.readStrategyDraft();
 		const preset = getPresets().find((candidate) => candidate.id === this.selectedPresetId);
 		if (!preset) {
 			return;
@@ -306,6 +436,8 @@ class CombatStartSetup extends HandlebarsApplicationMixin(ApplicationV2) {
 			commanderPositionY: preset.commanderPositionY ?? 50,
 			commanderZoom: preset.commanderZoom ?? 100,
 		};
+		this.strategyDraft = foundry.utils.deepClone(preset.strategy ?? getDefaultStrategy());
+		this.activeTab = "briefing";
 		this.render();
 	}
 
@@ -320,6 +452,7 @@ class CombatStartSetup extends HandlebarsApplicationMixin(ApplicationV2) {
 		await game.settings.set(MODULE_ID, PRESETS_SETTING, { items: presets });
 		this.selectedPresetId = "";
 		this.draft = getDefaultPresentation();
+		this.strategyDraft = getDefaultStrategy();
 		this.render();
 	}
 
@@ -663,16 +796,47 @@ function getAvailableSceneTokens(combat, disposition) {
 		&& !existingTokenIds.has(token.id));
 }
 
-/** @param {number} disposition @returns {string} */
-function getDispositionLabel(disposition) {
-	if (disposition === CONST.TOKEN_DISPOSITIONS.FRIENDLY) {
-		return "Friendly";
-	}
-	if (disposition === CONST.TOKEN_DISPOSITIONS.HOSTILE) {
-		return "Hostile";
+/**
+ * Capture the actor counts that identify an encounter without recording mutable combat state.
+ *
+ * @param {Combat|null} combat
+ * @returns {Array<{actorId: string, name: string, count: number}>}
+ */
+function getExpectedCombatants(combat) {
+	const expectedByActor = new Map();
+	for (const combatant of combat?.combatants ?? []) {
+		const actorId = combatant.actorId ?? combatant.token?.actorId;
+		if (!actorId) {
+			continue;
+		}
+
+		const expected = expectedByActor.get(actorId) ?? {
+			actorId,
+			name: combatant.actor?.name ?? combatant.name,
+			count: 0,
+		};
+		expected.count += 1;
+		expectedByActor.set(actorId, expected);
 	}
 
-	return "Neutral";
+	return Array.from(expectedByActor.values());
+}
+
+/**
+ * Identify actor counts required by a preset that are absent from the current encounter.
+ *
+ * @param {Array<{actorId: string, name: string, count: number>}|undefined} expectedCombatants
+ * @param {Combat|null} combat
+ * @returns {Array<{actorId: string, name: string, count: number}>}
+ */
+function getMissingCombatants(expectedCombatants = [], combat) {
+	const currentCounts = new Map(getExpectedCombatants(combat)
+		.map((combatant) => [combatant.actorId, combatant.count]));
+
+	return expectedCombatants.flatMap((expected) => {
+		const missingCount = Number(expected.count) - (currentCounts.get(expected.actorId) ?? 0);
+		return missingCount > 0 ? [{ ...expected, count: missingCount }] : [];
+	});
 }
 
 /** @param {number} disposition @returns {string} */

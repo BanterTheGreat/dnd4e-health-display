@@ -9,7 +9,7 @@
 }
 
 .dnd4e-info-team-display__panel {
-	overflow: hidden;
+	overflow: visible;
 	border: 1px solid #997456;
 	border-radius: 0.65rem;
 	background: rgb(9 9 11 / 95%);
@@ -22,6 +22,7 @@
 	display: block;
 	padding: 0.55rem 0.7rem;
 	border-bottom: 1px solid rgb(153 116 86 / 55%);
+	border-radius: 0.65rem 0.65rem 0 0;
 	background: linear-gradient(110deg, rgb(53 35 24 / 90%), rgb(8 8 9 / 92%) 58%);
 	cursor: grab;
 	touch-action: none;
@@ -71,6 +72,8 @@
 	padding: 0.52rem 0.18rem;
 	border-bottom: 1px solid rgb(153 116 86 / 24%);
 	background: rgb(255 255 255 / 2%);
+	cursor: pointer;
+	transition: background 120ms ease, box-shadow 120ms ease, transform 120ms ease;
 }
 
 .dnd4e-info-team-display__member:nth-child(even) {
@@ -85,13 +88,59 @@
 	box-shadow: inset 3px 0 #b33d38;
 }
 
-.dnd4e-info-team-display__member > img {
+.dnd4e-info-team-display__member:hover,
+.dnd4e-info-team-display__member:focus-visible {
+	background: rgb(177 132 81 / 16%);
+	box-shadow: inset 2px 0 #c89a62;
+	outline: 1px solid #d5ae79;
+	outline-offset: -1px;
+	transform: translateX(0.1rem);
+}
+
+.dnd4e-info-team-display__portrait {
+	position: relative;
+	width: 2.35rem;
+	height: 2.35rem;
+}
+
+.dnd4e-info-team-display__portrait > img {
 	width: 2.35rem;
 	height: 2.35rem;
 	border: 1px solid #bb936a;
 	border-radius: 50%;
 	background: #181310;
 	box-shadow: 0 0 0 2px #181310, 0 0 0 3px #705039;
+	object-fit: cover;
+}
+
+.dnd4e-info-team-display__portrait-preview {
+	position: absolute;
+	top: 50%;
+	left: calc(100% + 0.7rem);
+	z-index: 1;
+	display: block;
+	width: 11rem;
+	padding: 0.22rem;
+	border: 1px solid #bb936a;
+	border-radius: 0.35rem;
+	background: #15100e;
+	box-shadow: 0 0.6rem 1.25rem rgb(0 0 0 / 75%);
+	opacity: 0;
+	pointer-events: none;
+	transform: translateY(-50%) scale(0.96);
+	transition: opacity 120ms ease, transform 120ms ease;
+}
+
+.dnd4e-info-team-display__portrait:hover .dnd4e-info-team-display__portrait-preview {
+	opacity: 1;
+	transform: translateY(-50%) scale(1);
+}
+
+.dnd4e-info-team-display__portrait-preview img {
+	display: block;
+	width: 100%;
+	aspect-ratio: 1;
+	border-radius: 0.2rem;
 	object-fit: cover;
 }
 

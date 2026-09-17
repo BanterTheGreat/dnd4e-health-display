@@ -24,8 +24,11 @@ function getTeamMemberData(token) {
 	const filledHpSegments = getFilledSegmentCount(hpValue, hpMaximum, hpSegmentCount);
 
 	return {
+		actorId: actor.id,
+		tokenId: token.id,
 		name: actor.name,
 		portrait: token.document?.texture?.src || actor.img,
+		actorImage: actor.img || token.document?.texture?.src,
 		isCritical: hpPercent <= 25,
 		hp: {
 			value: hpValue,

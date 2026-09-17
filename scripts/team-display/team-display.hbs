@@ -5,8 +5,13 @@
 	</header>
 	<section class="dnd4e-info-team-display__members" aria-label="Adventuring company">
 		{{#each members}}
-			<article class="dnd4e-info-team-display__member {{#if isCritical}}is-critical{{/if}}">
-				<img src="{{portrait}}" alt="" draggable="false">
+			<article class="dnd4e-info-team-display__member {{#if isCritical}}is-critical{{/if}}" data-actor-id="{{actorId}}" data-token-id="{{tokenId}}" role="button" tabindex="0" aria-label="Select {{name}}'s token. Right-click to open character sheet.">
+				<div class="dnd4e-info-team-display__portrait">
+					<img src="{{portrait}}" alt="" draggable="false">
+					<span class="dnd4e-info-team-display__portrait-preview" role="tooltip">
+						<img src="{{actorImage}}" alt="{{name}}">
+					</span>
+				</div>
 				<strong>{{name}}</strong>
 				<div class="dnd4e-info-team-display__seals">
 					<div class="dnd4e-info-team-display__seal dnd4e-info-team-display__seal--hp" style="--resource-angle: {{hp.angle}}deg; --segment-angle: {{hp.segmentAngle}}deg" role="img" aria-label="Hit points: {{hp.value}} of {{hp.maximum}}">
